@@ -546,14 +546,25 @@ function filteredTeacherResults() {
   }).sort((a, b) => new Date(b.date) - new Date(a.date));
 }
 function renderTeacherGrades(grades) {
-  $("#teacher-grades-body").innerHTML = grades.length ? grades.map(grade => `<tr class="teacher-result-row">
-    <td class="result-student" data-label="Alumno"><strong>${esc(grade.studentName)}</strong><small>${esc(grade.studentEmail)}</small></td>
-    <td class="result-exam" data-label="Evaluación"><strong>${esc(grade.examTitle)}</strong><small>${esc(grade.courseName)} · Intento ${grade.attempt || 1}</small></td>
-    <td class="result-score" data-label="Resultado"><strong class="grade">${grade.score} / 20</strong><small>${grade.correct} de ${grade.total} aciertos</small></td>
-    <td class="result-time" data-label="Tiempo"><strong>${Math.round((grade.secondsUsed || 0) / 60)} min</strong></td>
-    <td class="result-delivery" data-label="Entrega"><strong>${esc(grade.completionReason || "-")}</strong><small>${formatDate(grade.date)}</small></td>
-    <td class="result-action"><button class="icon-btn delete delete-result" data-id="${esc(grade.databaseId)}" type="button" aria-label="Eliminar resultado de ${esc(grade.studentName)}">Eliminar</button></td>
-  </tr>`).join("") : `<tr><td class="empty" colspan="6">Aún no hay resultados.</td></tr>`;
+  const students = new Map();
+  grades.forEach(grade => {
+    const key = grade.studentId || grade.studentEmail || grade.studentName;
+    if (!students.has(key)) students.set(key, { name: grade.studentName, grades: [] });
+    students.get(key).grades.push(grade);
+  });
+  $("#teacher-grades-body").innerHTML = students.size ? [...students.values()].map((student, index) => {
+    const bestScore = Math.max(...student.grades.map(grade => Number(grade.score) || 0));
+    return `<details class="student-result-group"${index === 0 ? " open" : ""}>
+      <summary><span class="student-result-avatar" aria-hidden="true">${esc((student.name || "A").charAt(0).toUpperCase())}</span><span class="student-result-name"><strong>${esc(student.name)}</strong><small>${student.grades.length} ${student.grades.length === 1 ? "resultado" : "resultados"}</small></span><span class="student-best-score"><small>Mejor nota</small><strong>${bestScore} / 20</strong></span><span class="student-result-toggle" aria-hidden="true"></span></summary>
+      <div class="student-grade-list">${student.grades.map(grade => `<article class="student-grade-row">
+        <div class="grade-exam"><small>Evaluación</small><strong>${esc(grade.examTitle)}</strong><span>${esc(grade.courseName)} · Intento ${grade.attempt || 1}</span></div>
+        <div><small>Nota</small><strong class="grade">${grade.score} / 20</strong><span>${grade.correct} de ${grade.total} aciertos</span></div>
+        <div><small>Tiempo</small><strong>${Math.round((grade.secondsUsed || 0) / 60)} min</strong></div>
+        <div class="grade-delivery"><small>Entrega</small><strong>${esc(grade.completionReason || "-")}</strong><span>${formatDate(grade.date)}</span></div>
+        <div class="grade-action"><button class="icon-btn delete delete-result" data-id="${esc(grade.databaseId)}" type="button" aria-label="Eliminar resultado de ${esc(student.name)}">Eliminar</button></div>
+      </article>`).join("")}</div>
+    </details>`;
+  }).join("") : emptyCard("Aún no hay resultados.");
   $$(".delete-result").forEach(button => button.addEventListener("click", () => deleteResult(button.dataset.id)));
 }
 async function deleteResult(databaseId) {

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Plataforma de cursos y exámenes para profesores y alumnos.">
   <title>Masterfull Academy | Cursos y exámenes</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=20260713-2">
 </head>
 <body>
   <header class="topbar">
@@ -85,7 +85,7 @@
         <div class="list-head"><h3>Resultados de alumnos</h3><div><button class="btn secondary" id="refresh-results">Actualizar resultados</button><button class="btn secondary" id="export-grades">Exportar CSV</button></div></div>
         <div class="filters"><input id="teacher-search" placeholder="Buscar alumno o correo"><select id="teacher-course-filter"><option value="">Todos los cursos</option></select><select id="teacher-exam-filter"><option value="">Todos los exámenes</option></select></div>
         <p id="teacher-results-status" class="muted small"></p>
-        <div class="teacher-results-wrap"><table class="teacher-results-table"><thead><tr><th>Alumno</th><th>Evaluación</th><th>Resultado</th><th>Tiempo</th><th>Entrega</th><th>Acciones</th></tr></thead><tbody id="teacher-grades-body"></tbody></table></div>
+        <div id="teacher-grades-body" class="student-results-list"></div>
       </div>
     </section>
 
@@ -225,6 +225,6 @@
   <footer>Masterfull Academy · Plataforma educativa digital.</footer>
   <script src="config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="app.js"></script>
+  <script src="app.js?v=20260713-2"></script>
 </body>
 </html>
