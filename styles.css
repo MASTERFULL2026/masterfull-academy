@@ -13,6 +13,8 @@
 }
 * { box-sizing: border-box; }
 body { margin: 0; color: var(--ink); background: var(--bg); min-height: 100vh; }
+body.session-loading > * { visibility: hidden; }
+body.session-loading::before { content: "Cargando plataforma…"; position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; visibility: visible; color: var(--muted); background: var(--bg); font-size: 14px; font-weight: 700; }
 button, input, textarea, select { font: inherit; }
 button { cursor: pointer; }
 .topbar { height: 72px; display: flex; align-items: center; justify-content: space-between; padding: 0 max(5vw, 24px); background: #fff; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 10; }

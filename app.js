@@ -101,7 +101,6 @@ function translateError(error) {
 
 async function initApp() {
   bindStaticEvents();
-  show("auth-view");
   setSessionMessage("Cargando sesión...");
   $("#login-error").textContent = "";
   $("#register-error").textContent = "";
@@ -119,6 +118,8 @@ async function initApp() {
   if (!sb) {
     $("#login-error").textContent = "No se pudo cargar la biblioteca de Supabase.";
     setSessionMessage("Supabase no está disponible.", "error");
+    appReady = true;
+    renderApp();
     return;
   }
   sb.auth.onAuthStateChange(async (_event, session) => {
@@ -308,6 +309,7 @@ function normalizeAnswer(answer, options, index, zeroBasedNumber = false) {
 }
 
 function renderApp() {
+  document.body.classList.remove("session-loading");
   if (!currentUser) {
     $("#session-area").innerHTML = `<span class="muted small">Acceso con Supabase</span>`;
     show("auth-view");
@@ -1211,4 +1213,12 @@ function download(content, filename, type) {
   URL.revokeObjectURL(link.href);
 }
 
-initApp();
+initApp().catch(error => {
+  console.error("No se pudo iniciar la plataforma:", error);
+  document.body.classList.remove("session-loading");
+  if (currentUser) renderApp();
+  else {
+    show("auth-view");
+    setSessionMessage("No se pudo iniciar la plataforma.", "error");
+  }
+});
