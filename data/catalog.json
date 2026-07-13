@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-07-12T00:00:00Z",
+  "courses": [
+    {
+      "id": "fisica",
+      "name": "Física",
+      "description": "Curso de Física",
+      "teacher_name": "Profesor",
+      "exams": [
+        "./data/exams/fisica-mru.json"
+      ]
+    },
+    {
+      "id": "matematica",
+      "name": "Matemática",
+      "description": "Curso de práctica matemática",
+      "teacher_name": "Profesor",
+      "exams": [
+        "./data/exams/ejemplo-examen.json"
+      ]
+    }
+  ]
+}

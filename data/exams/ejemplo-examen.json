@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "id": "matematica-ejemplo-01",
+  "course_id": "matematica",
+  "title": "Examen de ejemplo",
+  "minutes": 10,
+  "questions_to_show": 3,
+  "attempts_allowed": 2,
+  "published": true,
+  "option_count": 5,
+  "questions": [
+    {
+      "id": "mate-001",
+      "text": "¿Cuánto es 8 × 7?",
+      "image": "",
+      "options": ["48", "54", "56", "64", "72"],
+      "correct": 2
+    },
+    {
+      "id": "mate-002",
+      "text": "¿Cuál es el resultado de 15 + 27?",
+      "image": "",
+      "options": ["32", "40", "42", "45", "52"],
+      "correct": 2
+    },
+    {
+      "id": "mate-003",
+      "text": "¿Qué fracción equivale a 0.5?",
+      "image": "",
+      "options": ["1/4", "1/2", "2/3", "3/4", "5/4"],
+      "correct": 1
+    },
+    {
+      "id": "mate-004",
+      "text": "¿Cuál es el área de un cuadrado de lado 6?",
+      "image": "",
+      "options": ["12", "18", "24", "36", "42"],
+      "correct": 3
+    }
+  ]
+}

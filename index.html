@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Plataforma de cursos y exámenes para profesores y alumnos.">
+  <title>Masterfull Academy | Cursos y exámenes</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#" id="brand-link"><span class="brand-mark">MA</span><span>Masterfull Academy</span></a>
+    <div id="session-area"></div>
+  </header>
+
+  <main>
+    <section id="auth-view" class="view active">
+      <div class="auth-layout">
+        <div class="auth-copy">
+          <h1 class="academy-title" aria-label="Masterfull Academy">
+            <span>MASTERFULL</span>
+            <span>ACADEMY</span>
+          </h1>
+          <p class="academy-slogan">Aprende, supera desafíos y alcanza tu mejor nivel.</p>
+          <div class="academy-game-decor" aria-hidden="true">
+            <span class="decor-star star-one">★</span>
+            <span class="decor-star star-two">★</span>
+            <span class="decor-block">?</span>
+            <span class="decor-pipe pipe-left"></span>
+            <span class="decor-pipe pipe-right"></span>
+          </div>
+        </div>
+        <div class="panel auth-card">
+          <div class="auth-switch">
+            <button class="auth-tab active" data-auth="login">Iniciar sesión</button>
+            <button class="auth-tab" data-auth="register">Registrarse</button>
+          </div>
+
+          <form id="login-form" class="auth-form">
+            <h2>Bienvenido</h2>
+            <p class="muted">Ingresa con tu correo y contraseña.</p>
+            <label>Correo electrónico<input id="login-email" type="email" required autocomplete="email" placeholder="nombre@correo.com"></label>
+            <label>Contraseña
+              <span class="password-field"><input id="login-password" type="password" required autocomplete="current-password" placeholder="Tu contraseña"><button class="password-toggle" type="button" data-password="login-password" aria-label="Mostrar contraseña" title="Mostrar contraseña"></button></span>
+            </label>
+            <button class="btn primary full" type="submit">Ingresar</button>
+            <p id="login-error" class="error"></p>
+          </form>
+
+          <form id="register-form" class="auth-form hidden">
+            <h2>Crea tu cuenta</h2>
+            <label>Nombre completo<input id="register-name" required maxlength="80" placeholder="Nombres y apellidos"></label>
+            <label>Correo electrónico<input id="register-email" type="email" required autocomplete="email" placeholder="nombre@correo.com"></label>
+            <label>Contraseña
+              <span class="password-field"><input id="register-password" type="password" required minlength="8" autocomplete="new-password" placeholder="Mínimo 8 caracteres"><button class="password-toggle" type="button" data-password="register-password" aria-label="Mostrar contraseña" title="Mostrar contraseña"></button></span>
+            </label>
+            <label>Confirmar contraseña
+              <span class="password-field"><input id="register-password-confirm" type="password" required minlength="8" autocomplete="new-password" placeholder="Escribe la contraseña otra vez"><button class="password-toggle" type="button" data-password="register-password-confirm" aria-label="Mostrar contraseña" title="Mostrar contraseña"></button></span>
+            </label>
+            <p class="notice compact">El registro público crea cuentas de alumno. Para convertir una cuenta en profesor, cambia su rol desde Supabase siguiendo el README.</p>
+            <button class="btn primary full" type="submit">Crear cuenta</button>
+            <p id="register-error" class="error"></p>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <section id="teacher-view" class="view">
+      <div class="dashboard-head">
+        <div><span class="eyebrow">PANEL DEL PROFESOR</span><h2 id="teacher-welcome">Hola, profesor</h2><p class="muted">Revisa cursos publicados y prepara borradores JSON locales.</p></div>
+        <button class="btn primary" id="new-course-btn">+ Crear curso</button>
+      </div>
+      <div id="teacher-stats" class="stats"></div>
+      <div class="tabs">
+        <button class="tab active" data-teacher-tab="teacher-courses">Mis cursos</button>
+        <button class="tab" data-teacher-tab="teacher-exams">Exámenes</button>
+        <button class="tab" data-teacher-tab="teacher-grades">Notas</button>
+      </div>
+      <div id="teacher-courses" class="tab-content active"><p id="catalog-status" class="notice compact"></p><div id="teacher-course-list" class="card-grid"></div></div>
+      <div id="teacher-exams" class="tab-content">
+        <div class="list-head"><h3>Mis exámenes</h3><button class="btn primary" id="new-exam-btn">+ Crear examen</button></div>
+        <div id="teacher-exam-list" class="card-grid"></div>
+      </div>
+      <div id="teacher-grades" class="tab-content">
+        <div class="list-head"><h3>Resultados de alumnos</h3><div><button class="btn secondary" id="refresh-results">Actualizar resultados</button><button class="btn secondary" id="export-grades">Exportar CSV</button></div></div>
+        <div class="filters"><input id="teacher-search" placeholder="Buscar alumno o correo"><select id="teacher-course-filter"><option value="">Todos los cursos</option></select><select id="teacher-exam-filter"><option value="">Todos los exámenes</option></select></div>
+        <p id="teacher-results-status" class="muted small"></p>
+        <div class="table-wrap"><table><thead><tr><th>Alumno</th><th>Correo</th><th>Curso</th><th>Examen</th><th>Intento</th><th>Nota</th><th>Aciertos</th><th>Tiempo</th><th>Motivo</th><th>Fecha</th></tr></thead><tbody id="teacher-grades-body"></tbody></table></div>
+      </div>
+    </section>
+
+    <section id="student-view" class="view">
+      <div class="dashboard-head">
+        <div><span class="eyebrow">PANEL DEL ALUMNO</span><h2 id="student-welcome">Hola, alumno</h2><p class="muted">Estos son los cursos y exámenes disponibles.</p></div>
+      </div>
+      <div id="student-stats" class="stats"></div>
+      <div class="tabs">
+        <button class="tab active" data-student-tab="student-courses">Cursos y exámenes</button>
+        <button class="tab" data-student-tab="student-grades">Mis notas</button>
+      </div>
+      <div id="student-courses" class="tab-content active"><p id="student-catalog-status" class="notice compact"></p><div id="student-course-list"></div></div>
+      <div id="student-grades" class="tab-content">
+        <div class="table-wrap"><table><thead><tr><th>Curso</th><th>Examen</th><th>Intento</th><th>Nota</th><th>Aciertos</th><th>Fecha</th><th>Revisión</th></tr></thead><tbody id="student-grades-body"></tbody></table></div>
+      </div>
+    </section>
+
+    <section id="exam-view" class="view">
+      <div class="exam-head">
+        <div class="exam-head-copy"><span id="exam-course-name" class="eyebrow"></span><h2 id="exam-title"></h2><span id="exam-progress" class="exam-progress">0 de 0 respondidas</span></div>
+        <div class="timer"><small>TIEMPO RESTANTE</small><div>◷ <span id="timer">00:00</span></div></div>
+      </div>
+      <div class="notice exam-rules"><strong>Modo examen activo.</strong> Si cambias de pestaña, cierras sesión, recargas o abandonas esta página, el intento se entregará automáticamente con tus respuestas actuales.</div>
+      <form id="take-exam-form"><div id="questions-container"></div><button class="btn primary submit-exam" type="submit">Entregar examen</button></form>
+    </section>
+
+    <section id="result-view" class="view">
+      <div class="panel narrow result-panel">
+        <div class="result-icon">✓</div><span class="eyebrow">EXAMEN FINALIZADO</span>
+        <h2>Tu resultado</h2><div class="big-score"><span id="result-score">0</span><small>/ 20</small></div>
+        <p id="result-message" class="muted"></p>
+        <p id="result-encouragement" class="encouragement"></p>
+        <div id="result-review"></div>
+        <button class="btn primary" id="return-student">← Volver a mis cursos</button>
+      </div>
+    </section>
+  </main>
+
+  <div id="course-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="course-modal-title">
+    <div class="modal-card panel"><button class="modal-close" data-close="course-modal">×</button>
+      <h2 id="course-modal-title">Crear curso</h2>
+      <form id="course-form"><input type="hidden" id="course-id">
+        <label>Nombre del curso<input id="course-name" required maxlength="80" placeholder="Ej. Matemática 5.º"></label>
+        <label>Descripción<textarea id="course-description" rows="3" maxlength="250" placeholder="Breve descripción del curso"></textarea></label>
+        <button class="btn primary full" type="submit">Guardar curso</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="exam-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="exam-modal-title">
+    <div class="modal-card panel large"><button class="modal-close" data-close="exam-modal">×</button>
+      <div class="editor-sticky-bar">
+        <div><span class="eyebrow">EDITOR DE NIVEL</span><h2 id="exam-modal-title">Crear examen</h2></div>
+        <button class="btn primary editor-save" type="submit" form="exam-editor-form">Guardar examen</button>
+      </div>
+      <form id="exam-editor-form"><input type="hidden" id="editor-exam-id">
+        <div class="form-grid">
+          <label>Curso<select id="editor-course" required></select></label>
+          <label>Nombre del examen<input id="editor-title" required maxlength="80" placeholder="Ej. Examen parcial"></label>
+          <label>Tiempo (minutos)<input id="editor-minutes" type="number" min="1" max="180" value="20" required></label>
+          <label>Preguntas que verá el alumno<input id="editor-question-count" type="number" min="1" max="500" value="5" required></label>
+          <label>Intentos permitidos<input id="editor-attempts" type="number" min="1" max="20" value="1" required></label>
+          <label>Opciones por pregunta<select id="editor-option-count"><option value="2">2 opciones</option><option value="3">3 opciones</option><option value="4">4 opciones</option><option value="5" selected>5 opciones</option><option value="6">6 opciones</option><option value="7">7 opciones</option><option value="8">8 opciones</option></select></label>
+          <label>Estado<select id="editor-published"><option value="true">Publicado en JSON al exportar</option><option value="false">Borrador</option></select></label>
+        </div>
+        <p id="option-count-message" class="notice compact">Borrador local. Todavía no está publicado para los alumnos. Exporta el JSON y súbelo a GitHub para publicarlo.</p>
+        <div class="export-actions">
+          <button class="btn secondary" id="validate-exam-json" type="button">Validar JSON</button>
+          <button class="btn secondary" id="export-exam-json" type="button">Exportar examen JSON</button>
+          <button class="btn secondary" id="download-template-json" type="button">Descargar plantilla JSON</button>
+          <button class="btn secondary" id="copy-catalog-path" type="button">Copiar ruta para catalog.json</button>
+        </div>
+        <div class="question-builder-head">
+          <h3>Preguntas <span id="builder-count" class="badge">0</span></h3>
+        </div>
+        <div class="question-mode-tabs" role="tablist" aria-label="Forma de agregar preguntas">
+          <button class="question-mode active" data-question-mode="manual-panel" type="button">✎ Escribir pregunta</button>
+          <button class="question-mode" data-question-mode="generator-panel" type="button">✦ Generar automáticamente</button>
+          <button class="question-mode" data-question-mode="import-panel" type="button">↑ Importar preguntas</button>
+        </div>
+        <div id="manual-panel" class="question-tool-panel active">
+          <div><strong>Escribir manualmente</strong><p>Crea una pregunta en blanco y completa su enunciado, alternativas y respuesta correcta.</p></div>
+          <button class="btn primary" id="add-question-btn" type="button">+ Nueva pregunta</button>
+        </div>
+        <div id="generator-panel" class="question-tool-panel generator-box">
+          <div class="generator-heading"><div><span class="eyebrow">GENERADOR AUTOMÁTICO</span><h3>Crear desde apuntes</h3></div></div>
+          <p class="muted">Escribe una idea por línea usando <strong>concepto: definición</strong>. Ejemplo: <em>Triángulo: figura de tres lados</em>.</p>
+          <label>Apuntes o contenido<textarea id="generator-content" rows="6" placeholder="Triángulo: figura geométrica de tres lados&#10;Cuadrado: figura de cuatro lados iguales&#10;Círculo: figura redonda sin lados&#10;Rectángulo: figura de cuatro lados y ángulos rectos"></textarea></label>
+          <div class="generator-controls">
+            <label>Cantidad<input id="generator-count" type="number" min="1" max="20" value="5"></label>
+            <button class="btn primary" id="generate-questions-btn" type="button">Generar preguntas</button>
+          </div>
+          <p id="generator-message" class="error"></p>
+        </div>
+        <div id="import-panel" class="question-tool-panel">
+          <div class="import-info">
+            <strong>Importar desde un archivo</strong>
+            <p>Acepta campos en español o inglés: <code>pregunta</code>, <code>opciones</code> y <code>respuesta_correcta</code>.</p>
+            <p>La respuesta puede ser una letra (A–H), un número (1–8) o el texto de la alternativa.</p>
+            <p id="import-message" aria-live="polite"></p>
+          </div>
+          <label class="btn primary file-label">Seleccionar archivo JSON<input id="import-questions" type="file" accept=".json,application/json"></label>
+        </div>
+        <div id="question-builder"></div>
+        <p id="exam-editor-error" class="error"></p>
+      </form>
+    </div>
+  </div>
+  <div id="profile-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="profile-modal-title">
+    <div class="modal-card panel">
+      <button class="modal-close" data-close="profile-modal" type="button" aria-label="Cerrar">×</button>
+      <span class="eyebrow">MI CUENTA</span>
+      <h2 id="profile-modal-title">Editar perfil</h2>
+      <p class="muted">Actualiza tus datos personales o cambia tu contraseña.</p>
+      <form id="profile-form">
+        <label>Nombre completo<input id="profile-name" required maxlength="80"></label>
+        <label>Correo electrónico<input id="profile-email" type="email" required autocomplete="email"></label>
+        <label>Tipo de cuenta<input id="profile-role" disabled></label>
+        <div class="profile-password-section">
+          <h3>Cambiar contraseña <small>(opcional)</small></h3>
+          <label>Contraseña actual
+            <span class="password-field"><input id="profile-current-password" type="password" autocomplete="current-password" placeholder="Necesaria para cambiarla"><button class="password-toggle" type="button" data-password="profile-current-password" aria-label="Mostrar contraseña" title="Mostrar contraseña"></button></span>
+          </label>
+          <label>Nueva contraseña
+            <span class="password-field"><input id="profile-new-password" type="password" minlength="8" autocomplete="new-password" placeholder="Mínimo 8 caracteres"><button class="password-toggle" type="button" data-password="profile-new-password" aria-label="Mostrar contraseña" title="Mostrar contraseña"></button></span>
+          </label>
+          <label>Confirmar nueva contraseña
+            <span class="password-field"><input id="profile-confirm-password" type="password" minlength="8" autocomplete="new-password" placeholder="Escríbela nuevamente"><button class="password-toggle" type="button" data-password="profile-confirm-password" aria-label="Mostrar contraseña" title="Mostrar contraseña"></button></span>
+          </label>
+        </div>
+        <p id="profile-message" aria-live="polite"></p>
+        <button class="btn primary full" type="submit">Guardar perfil</button>
+      </form>
+    </div>
+  </div>
+  <footer>Masterfull Academy · Plataforma educativa digital.</footer>
+  <script src="config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+</body>
+</html>
