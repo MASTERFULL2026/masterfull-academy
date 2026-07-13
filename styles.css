@@ -118,13 +118,13 @@ th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
 .student-result-toggle::before { content: ""; display: block; width: 8px; height: 8px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); transition: transform .18s; }
 .student-result-group[open] .student-result-toggle::before { transform: rotate(225deg); }
 .student-grade-list { padding: 0 14px 14px; border-top: 1px solid var(--line); background: #fbfbfd; }
-.student-grade-row { display: grid; grid-template-columns: minmax(190px,1.4fr) minmax(110px,.7fr) minmax(70px,.45fr) minmax(185px,1fr) auto; align-items: center; gap: 18px; padding: 16px 6px; border-bottom: 1px solid var(--line); }
+.student-grade-row { display: grid; grid-template-columns: minmax(190px,1.4fr) minmax(110px,.7fr) minmax(70px,.45fr) minmax(185px,1fr) auto; align-items: start; gap: 18px; padding: 16px 6px; border-bottom: 1px solid var(--line); }
 .student-grade-row:last-child { border-bottom: 0; }
 .student-grade-row > div { display: flex; min-width: 0; align-self: start; flex-direction: column; gap: 4px; }
 .student-grade-row small { color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
 .student-grade-row strong, .student-grade-row span { overflow-wrap: anywhere; }
 .student-grade-row span { color: var(--muted); font-size: 12px; line-height: 1.35; }
-.student-grade-row .grade-action { align-items: center; padding-left: 12px; border-left: 1px solid var(--line); }
+.student-grade-row .grade-action { align-self: stretch; align-items: center; justify-content: center; padding-left: 12px; border-left: 1px solid var(--line); }
 .empty { text-align: center; color: var(--muted); padding: 35px; background: white; border: 1px dashed #ccd2dc; border-radius: 12px; }
 .settings, .backup { max-width: 650px; margin-bottom: 20px; }
 .file-label { display: inline-block; margin: 0; }
