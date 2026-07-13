@@ -61,7 +61,6 @@ input:focus, textarea:focus, select:focus { border-color: var(--primary); box-sh
 .filters input, .filters select { max-width: 260px; margin: 0; }
 .draft-card { border-style: dashed; background: #fffdf8; }
 .draft-card .notice { color: #8a5a00; background: #fff4d8; }
-.retry-catalog { margin-left: 10px; padding: 7px 11px; }
 .list-head > div { display: flex; flex-wrap: wrap; gap: 10px; }
 button:disabled { opacity: .62; cursor: wait; transform: none !important; }
 .hidden { display: none !important; }

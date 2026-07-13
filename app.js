@@ -169,8 +169,6 @@ async function fetchProfile(userId) {
 }
 
 async function loadCatalogSafe() {
-  const teacherStatus = $("#catalog-status");
-  if (teacherStatus) teacherStatus.textContent = "Cargando cursos...";
   try {
     const response = await fetch(CATALOG_URL, { cache: "no-store" });
     if (!response.ok) throw new Error(`No se pudo cargar ${CATALOG_URL}`);
@@ -179,16 +177,11 @@ async function loadCatalogSafe() {
     catalog = raw;
     publishedCourses = loaded.courses;
     publishedExams = loaded.exams;
-    const updated = raw.updated_at ? `Última actualización: ${formatDate(raw.updated_at)}.` : "Catálogo cargado.";
-    if (teacherStatus) teacherStatus.textContent = updated;
   } catch (error) {
     console.error("Error cargando catálogo:", error);
     catalog = null;
     publishedCourses = [];
     publishedExams = [];
-    const retry = `No se pudieron cargar los cursos. `;
-    if (teacherStatus) teacherStatus.innerHTML = `${retry}<button class="btn secondary retry-catalog">Reintentar</button>`;
-    $$(".retry-catalog").forEach(button => button.addEventListener("click", async () => { await loadCatalogSafe(); renderApp(); }));
   }
 }
 
@@ -499,7 +492,6 @@ function renderTeacher() {
     stat("Cursos publicados", publishedCourses.length, "▦") +
     stat("Borradores locales", drafts.exams.length, "▤") +
     stat("Resultados", results.length, "✓");
-  $("#catalog-status").textContent = catalog?.updated_at ? `Última actualización del catálogo: ${formatDate(catalog.updated_at)}.` : "No se pudieron cargar los cursos.";
   $("#teacher-course-list").innerHTML = renderTeacherCourses();
   $("#teacher-exam-list").innerHTML = exams.length ? exams.map(renderTeacherExamCard).join("") : emptyCard("Todavía no hay exámenes publicados ni borradores locales.");
   fillTeacherFilters();
