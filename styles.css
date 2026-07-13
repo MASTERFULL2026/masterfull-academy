@@ -105,6 +105,19 @@ table { border-collapse: collapse; width: 100%; }
 th, td { padding: 15px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
 th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
 .grade { font-weight: 800; color: var(--primary); }
+.teacher-results-wrap { width: 100%; }
+.teacher-results-table { border-collapse: separate; border-spacing: 0 12px; table-layout: fixed; }
+.teacher-results-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.teacher-results-table tbody { display: grid; gap: 12px; }
+.teacher-result-row { display: grid; grid-template-columns: minmax(150px,1fr) minmax(210px,1.45fr) minmax(115px,.65fr) minmax(70px,.45fr) minmax(190px,1.2fr) auto; align-items: stretch; background: white; border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 7px 22px #26324c09; overflow: hidden; }
+.teacher-result-row td { display: flex; min-width: 0; flex-direction: column; justify-content: center; gap: 4px; padding: 16px 14px; border: 0; white-space: normal; }
+.teacher-result-row td::before { content: attr(data-label); color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.teacher-result-row td strong { overflow-wrap: anywhere; font-size: 14px; }
+.teacher-result-row td small { color: var(--muted); line-height: 1.35; overflow-wrap: anywhere; }
+.teacher-result-row .result-score strong { font-size: 17px; }
+.teacher-result-row .result-action { align-items: center; padding: 14px; border-left: 1px solid var(--line); background: #fbfbfd; }
+.teacher-result-row .result-action::before { content: none; }
+.teacher-result-row .delete-result { min-height: 38px; }
 .empty { text-align: center; color: var(--muted); padding: 35px; background: white; border: 1px dashed #ccd2dc; border-radius: 12px; }
 .settings, .backup { max-width: 650px; margin-bottom: 20px; }
 .file-label { display: inline-block; margin: 0; }
@@ -305,6 +318,12 @@ footer { text-align: center; padding: 20px; color: var(--muted); font-size: 13px
 @media (prefers-reduced-motion: reduce) {
   *,*::before,*::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }
+@media (max-width: 1050px) {
+  .teacher-result-row { grid-template-columns: 1fr 1.35fr .8fr auto; }
+  .teacher-result-row .result-time { grid-column: 1; }
+  .teacher-result-row .result-delivery { grid-column: 2 / 4; }
+  .teacher-result-row .result-action { grid-column: 4; grid-row: 1 / 3; }
+}
 @media (max-width: 780px) {
   .topbar { height: auto; padding: 14px 18px; align-items: flex-start; }
   nav { gap: 1px; }
@@ -340,6 +359,10 @@ footer { text-align: center; padding: 20px; color: var(--muted); font-size: 13px
   .editor-sticky-bar .eyebrow { display: none; }
   .editor-sticky-bar h2 { font-size: 19px; }
   .editor-save { min-width: 0; padding: 10px 12px; font-size: 13px; }
+  .teacher-result-row { grid-template-columns: 1fr 1fr; }
+  .teacher-result-row .result-student, .teacher-result-row .result-exam, .teacher-result-row .result-score, .teacher-result-row .result-time, .teacher-result-row .result-delivery, .teacher-result-row .result-action { grid-column: auto; grid-row: auto; }
+  .teacher-result-row .result-exam, .teacher-result-row .result-delivery { grid-column: 1 / -1; }
+  .teacher-result-row .result-action { grid-column: 1 / -1; align-items: stretch; border-top: 1px solid var(--line); border-left: 0; }
   .student-game-mode .dashboard-head { padding: 22px 20px; }
   .student-game-mode .dashboard-head::after { display: none; }
   .result-game-mode #return-student { top: auto; right: 14px; bottom: 16px; left: 14px; width: calc(100% - 28px); }

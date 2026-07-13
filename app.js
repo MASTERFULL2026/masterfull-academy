@@ -546,7 +546,14 @@ function filteredTeacherResults() {
   }).sort((a, b) => new Date(b.date) - new Date(a.date));
 }
 function renderTeacherGrades(grades) {
-  $("#teacher-grades-body").innerHTML = grades.length ? grades.map(grade => `<tr><td>${esc(grade.studentName)}</td><td>${esc(grade.studentEmail)}</td><td>${esc(grade.courseName)}</td><td>${esc(grade.examTitle)}</td><td>${grade.attempt || 1}</td><td class="grade">${grade.score} / 20</td><td>${grade.correct} / ${grade.total}</td><td>${Math.round((grade.secondsUsed || 0) / 60)} min</td><td>${esc(grade.completionReason || "-")}</td><td>${formatDate(grade.date)}</td><td><button class="icon-btn delete delete-result" data-id="${esc(grade.databaseId)}" type="button" aria-label="Eliminar resultado de ${esc(grade.studentName)}">Eliminar</button></td></tr>`).join("") : empty("Aún no hay resultados.", 11);
+  $("#teacher-grades-body").innerHTML = grades.length ? grades.map(grade => `<tr class="teacher-result-row">
+    <td class="result-student" data-label="Alumno"><strong>${esc(grade.studentName)}</strong><small>${esc(grade.studentEmail)}</small></td>
+    <td class="result-exam" data-label="Evaluación"><strong>${esc(grade.examTitle)}</strong><small>${esc(grade.courseName)} · Intento ${grade.attempt || 1}</small></td>
+    <td class="result-score" data-label="Resultado"><strong class="grade">${grade.score} / 20</strong><small>${grade.correct} de ${grade.total} aciertos</small></td>
+    <td class="result-time" data-label="Tiempo"><strong>${Math.round((grade.secondsUsed || 0) / 60)} min</strong></td>
+    <td class="result-delivery" data-label="Entrega"><strong>${esc(grade.completionReason || "-")}</strong><small>${formatDate(grade.date)}</small></td>
+    <td class="result-action"><button class="icon-btn delete delete-result" data-id="${esc(grade.databaseId)}" type="button" aria-label="Eliminar resultado de ${esc(grade.studentName)}">Eliminar</button></td>
+  </tr>`).join("") : `<tr><td class="empty" colspan="6">Aún no hay resultados.</td></tr>`;
   $$(".delete-result").forEach(button => button.addEventListener("click", () => deleteResult(button.dataset.id)));
 }
 async function deleteResult(databaseId) {
