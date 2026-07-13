@@ -560,7 +560,7 @@ function renderTeacherGrades(grades) {
         <div class="grade-exam"><small>Evaluación</small><strong>${esc(grade.examTitle)}</strong><span>${esc(grade.courseName)} · Intento ${grade.attempt || 1}</span></div>
         <div><small>Nota</small><strong class="grade">${grade.score} / 20</strong><span>${grade.correct} de ${grade.total} aciertos</span></div>
         <div><small>Tiempo</small><strong>${Math.round((grade.secondsUsed || 0) / 60)} min</strong></div>
-        <div class="grade-delivery"><small>Entrega</small><strong>${esc(grade.completionReason || "-")}</strong><span>${formatDate(grade.date)}</span></div>
+        <div class="grade-delivery"><small>Fecha</small><strong>${formatDate(grade.date)}</strong></div>
         <div class="grade-action"><button class="icon-btn delete delete-result" data-id="${esc(grade.databaseId)}" type="button" aria-label="Eliminar resultado de ${esc(student.name)}">Eliminar</button></div>
       </article>`).join("")}</div>
     </details>`;

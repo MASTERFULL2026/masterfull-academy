@@ -120,7 +120,7 @@ th { color: var(--muted); font-size: 12px; text-transform: uppercase; }
 .student-grade-list { padding: 0 14px 14px; border-top: 1px solid var(--line); background: #fbfbfd; }
 .student-grade-row { display: grid; grid-template-columns: minmax(190px,1.4fr) minmax(110px,.7fr) minmax(70px,.45fr) minmax(185px,1fr) auto; align-items: center; gap: 18px; padding: 16px 6px; border-bottom: 1px solid var(--line); }
 .student-grade-row:last-child { border-bottom: 0; }
-.student-grade-row > div { display: flex; min-width: 0; flex-direction: column; gap: 4px; }
+.student-grade-row > div { display: flex; min-width: 0; align-self: start; flex-direction: column; gap: 4px; }
 .student-grade-row small { color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
 .student-grade-row strong, .student-grade-row span { overflow-wrap: anywhere; }
 .student-grade-row span { color: var(--muted); font-size: 12px; line-height: 1.35; }
