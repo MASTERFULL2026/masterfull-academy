@@ -384,7 +384,7 @@ function normalizeAnswer(answer, options, index, zeroBasedNumber = false) {
 function renderApp() {
   document.body.classList.remove("session-loading");
   if (!currentUser) {
-    $("#session-area").innerHTML = `<span class="muted small">Acceso con Supabase</span>`;
+    $("#session-area").innerHTML = "";
     show("auth-view");
     return;
   }
