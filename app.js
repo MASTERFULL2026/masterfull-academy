@@ -1057,6 +1057,7 @@ function toggleSidebar() {
   const visible = mobile ? document.body.classList.toggle("sidebar-open") : !document.body.classList.toggle("sidebar-collapsed");
   $("#sidebar-toggle").setAttribute("aria-expanded", String(visible));
   $("#sidebar-toggle").setAttribute("aria-label", visible ? "Ocultar barra lateral" : "Mostrar barra lateral");
+  $("#sidebar-toggle").setAttribute("title", visible ? "Ocultar barra lateral" : "Mostrar barra lateral");
 }
 async function saveCourseDraft(event) {
   event.preventDefault();
