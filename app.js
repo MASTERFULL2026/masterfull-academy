@@ -10,6 +10,9 @@ let pendingResults = load(PENDING_RESULTS_KEY, []);
 let sb = null;
 let currentUser = null;
 let catalog = null;
+let catalogCourses = [];
+let catalogExams = [];
+let courseChanges = [];
 let publishedCourses = [];
 let publishedExams = [];
 let results = [];
@@ -125,6 +128,7 @@ async function initApp() {
   sb.auth.onAuthStateChange(async (_event, session) => {
     if (!appReady) return;
     await setSessionFromSupabase(session, false);
+    if (currentUser) await loadCourseChanges();
     renderApp();
   });
   const [{ data: sessionData }, _catalog] = await Promise.all([
@@ -132,6 +136,7 @@ async function initApp() {
     loadCatalogSafe()
   ]);
   await setSessionFromSupabase(sessionData.session, false);
+  if (currentUser) await loadCourseChanges();
   appReady = true;
   await syncPendingResults();
   await refreshResults();
@@ -175,14 +180,37 @@ async function loadCatalogSafe() {
     const raw = await response.json();
     const loaded = await normalizeCatalog(raw);
     catalog = raw;
-    publishedCourses = loaded.courses;
-    publishedExams = loaded.exams;
+    catalogCourses = loaded.courses;
+    catalogExams = loaded.exams;
+    applyCourseChanges();
   } catch (error) {
     console.error("Error cargando catálogo:", error);
     catalog = null;
+    catalogCourses = [];
+    catalogExams = [];
     publishedCourses = [];
     publishedExams = [];
   }
+}
+
+function applyCourseChanges() {
+  const changes = new Map(courseChanges.map(change => [change.course_id, change]));
+  publishedCourses = catalogCourses.filter(course => !changes.get(course.id)?.deleted).map(course => {
+    const change = changes.get(course.id);
+    return change ? { ...course, name: change.name || course.name, description: change.description ?? course.description } : course;
+  });
+  const visibleCourseIds = new Set(publishedCourses.map(course => course.id));
+  publishedExams = catalogExams.filter(exam => visibleCourseIds.has(exam.courseId));
+}
+
+async function loadCourseChanges() {
+  if (!sb || !currentUser) return;
+  const { data, error } = await sb.from("course_changes").select("course_id, name, description, deleted, updated_at");
+  if (error) {
+    console.error("No se pudieron cargar los cambios de cursos:", error);
+    courseChanges = [];
+  } else courseChanges = data || [];
+  applyCourseChanges();
 }
 
 async function normalizeCatalog(raw) {
@@ -501,7 +529,7 @@ function renderTeacher() {
 function renderTeacherCourses() {
   const published = publishedCourses.map(course => {
     const count = publishedExams.filter(exam => exam.courseId === course.id).length;
-    return `<article class="course-card"><div class="course-icon">▦</div><span class="badge">${count} examen(es)</span><h3>${esc(course.name)}</h3><p>${esc(course.description || "Sin descripción")} · Profesor: ${esc(course.teacherName)}</p><div class="status published">Publicado desde JSON</div></article>`;
+    return `<article class="course-card"><div class="course-icon">▦</div><span class="badge">${count} examen(es)</span><h3>${esc(course.name)}</h3><p>${esc(course.description || "Sin descripción")} · Profesor: ${esc(course.teacherName)}</p><div class="status published">Publicado para todos</div><div class="card-actions"><button class="icon-btn edit-published-course" data-id="${esc(course.id)}" type="button">Editar</button><button class="icon-btn delete delete-published-course" data-id="${esc(course.id)}" type="button">Eliminar</button></div></article>`;
   });
   const local = drafts.courses.map(course => {
     const count = drafts.exams.filter(exam => exam.courseId === course.id).length;
@@ -518,6 +546,8 @@ function bindTeacherActions() {
   $$(".create-exam-course").forEach(button => button.addEventListener("click", () => openExamModal(null, button.dataset.id)));
   $$(".edit-course").forEach(button => button.addEventListener("click", () => openCourseModal(button.dataset.id)));
   $$(".delete-course").forEach(button => button.addEventListener("click", () => deleteCourseDraft(button.dataset.id)));
+  $$(".edit-published-course").forEach(button => button.addEventListener("click", () => openCourseModal(button.dataset.id)));
+  $$(".delete-published-course").forEach(button => button.addEventListener("click", () => deletePublishedCourse(button.dataset.id)));
   $$(".edit-exam").forEach(button => button.addEventListener("click", () => openExamModal(button.dataset.id)));
   $$(".delete-exam").forEach(button => button.addEventListener("click", () => deleteExamDraft(button.dataset.id)));
   $$(".export-draft").forEach(button => button.addEventListener("click", () => { openExamModal(button.dataset.id); setTimeout(exportCurrentExam, 50); }));
@@ -865,21 +895,56 @@ function switchTab(prefix, id, button) {
   document.querySelectorAll(`#${prefix}-view .tab-content`).forEach(content => content.classList.toggle("active", content.id === id));
 }
 function openCourseModal(id = "") {
-  const course = drafts.courses.find(item => item.id === id);
-  $("#course-modal-title").textContent = course ? "Editar curso local" : "Crear curso local";
+  const localCourse = drafts.courses.find(item => item.id === id);
+  const publishedCourse = publishedCourses.find(item => item.id === id);
+  const course = localCourse || publishedCourse;
+  $("#course-modal-title").textContent = publishedCourse ? "Editar curso publicado" : localCourse ? "Editar curso local" : "Crear curso local";
   $("#course-id").value = course?.id || "";
   $("#course-name").value = course?.name || "";
   $("#course-description").value = course?.description || "";
+  $("#course-error").textContent = "";
   $("#course-modal").classList.remove("hidden");
   $("#course-name").focus();
 }
-function saveCourseDraft(event) {
+async function saveCourseDraft(event) {
   event.preventDefault();
   const id = $("#course-id").value;
   const course = { id: id || slug($("#course-name").value), name: $("#course-name").value.trim(), description: $("#course-description").value.trim(), teacherName: currentUser.name, local: true };
+  if (id && publishedCourses.some(item => item.id === id)) {
+    const submit = event.submitter;
+    if (submit) submit.disabled = true;
+    $("#course-error").textContent = "";
+    const { error } = await sb.from("course_changes").upsert({ course_id: id, name: course.name, description: course.description, deleted: false, updated_by: currentUser.id }, { onConflict: "course_id" });
+    if (submit) submit.disabled = false;
+    if (error) {
+      console.error("Editar curso publicado:", error);
+      $("#course-error").textContent = translateError(error);
+      return;
+    }
+    await loadCourseChanges();
+    closeModal("course-modal");
+    renderTeacher();
+    return;
+  }
   if (id) drafts.courses = drafts.courses.map(item => item.id === id ? { ...item, ...course } : item); else drafts.courses.push(course);
   saveDrafts();
   closeModal("course-modal");
+  renderTeacher();
+}
+
+async function deletePublishedCourse(id) {
+  if (!sb || currentUser?.role !== "teacher") return;
+  const course = publishedCourses.find(item => item.id === id);
+  if (!course) return;
+  const examCount = publishedExams.filter(exam => exam.courseId === id).length;
+  if (!confirm(`¿Eliminar “${course.name}” para todos los alumnos${examCount ? ` junto con sus ${examCount} examen(es)` : ""}? Las notas históricas se conservarán.`)) return;
+  const { error } = await sb.from("course_changes").upsert({ course_id: id, name: course.name, description: course.description || "", deleted: true, updated_by: currentUser.id }, { onConflict: "course_id" });
+  if (error) {
+    console.error("Eliminar curso publicado:", error);
+    alert(translateError(error));
+    return;
+  }
+  await loadCourseChanges();
   renderTeacher();
 }
 function deleteCourseDraft(id) {
