@@ -30,7 +30,6 @@ let soundEnabled = localStorage.getItem(SOUND_KEY) !== "false";
 let audioContext = null;
 let minuteWarningPlayed = false;
 let appReady = false;
-let teacherCourseFilter = "all";
 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
@@ -372,11 +371,6 @@ function bindStaticEvents() {
   $("#profile-form").addEventListener("submit", saveProfile);
   $("#new-course-btn").addEventListener("click", () => openCourseModal());
   $("#course-search").addEventListener("input", renderTeacherCourseList);
-  $$(".course-filter").forEach(button => button.addEventListener("click", () => {
-    teacherCourseFilter = button.dataset.courseFilter;
-    $$(".course-filter").forEach(item => item.classList.toggle("active", item === button));
-    renderTeacherCourseList();
-  }));
   $("#new-exam-btn").addEventListener("click", () => openExamModal());
   $("#course-form").addEventListener("submit", saveCourseDraft);
   $("#exam-editor-form").addEventListener("submit", saveExamDraft);
@@ -540,7 +534,6 @@ function renderTeacher() {
   const exams = [...publishedExams, ...drafts.exams];
   $("#teacher-stats").innerHTML =
     stat("Cursos publicados", publishedCourses.length, "courses", "published") +
-    stat("Borradores locales", drafts.courses.length, "exams", "draft") +
     stat("Resultados", results.length, "results", "grades");
   $("#courses-tab-count").textContent = publishedCourses.length + drafts.courses.length;
   $("#exams-tab-count").textContent = exams.length;
@@ -559,25 +552,23 @@ function renderTeacherCourseList(bind = true) {
 function activateStat(action) {
   if (action === "grades") { const tab = $('[data-teacher-tab="teacher-grades"]'); switchTab("teacher", "teacher-grades", tab); return; }
   switchTab("teacher", "teacher-courses", $('[data-teacher-tab="teacher-courses"]'));
-  teacherCourseFilter = action;
-  $$(".course-filter").forEach(item => item.classList.toggle("active", item.dataset.courseFilter === action));
   renderTeacherCourseList();
 }
 function renderTeacherCourses() {
   const query = ($("#course-search")?.value || "").trim().toLocaleLowerCase("es");
-  const matches = (course, state, count) => (!query || `${course.name} ${course.description || ""} ${state}`.toLocaleLowerCase("es").includes(query)) && (teacherCourseFilter === "all" || teacherCourseFilter === state || (teacherCourseFilter === "empty" && count === 0));
+  const matches = (course, state) => !query || `${course.name} ${course.description || ""} ${state}`.toLocaleLowerCase("es").includes(query);
   const published = publishedCourses.map(course => {
     const count = publishedExams.filter(exam => exam.courseId === course.id).length;
-    if (!matches(course, "published", count)) return "";
+    if (!matches(course, "published")) return "";
     const updated = courseChanges.find(change => change.course_id === course.id)?.updated_at;
-    return `<article class="course-card"><div class="course-icon">${modernIcon("course")}</div><span class="status published">Publicado ✓</span><h3>${esc(course.name)}</h3><p>${esc(course.description || "Sin descripción registrada")}</p><div class="course-meta"><span>${quantity(count, "examen", "exámenes")}</span><span>0 borradores</span>${updated ? `<span>Última actualización: ${shortDate(updated)}</span>` : ""}</div><div class="card-actions"><button class="btn secondary view-course" type="button">Ver curso</button><button class="btn secondary create-exam-course" data-id="${esc(course.id)}" type="button">Crear examen</button><button class="icon-btn edit-published-course" data-id="${esc(course.id)}" type="button">Editar</button><button class="icon-btn delete delete-published-course" data-id="${esc(course.id)}" type="button">Eliminar</button></div></article>`;
+    return `<article class="course-card compact-course"><div class="course-card-head"><div class="course-icon">${modernIcon("course")}</div><div><h3>${esc(course.name)}</h3><span class="status published">Publicado ✓</span></div></div><p>${esc(course.description || "Sin descripción registrada")}</p><div class="course-meta"><span>${quantity(count, "examen", "exámenes")}</span>${updated ? `<span>Actualizado: ${shortDate(updated)}</span>` : ""}</div><div class="card-actions compact-actions"><button class="btn secondary create-exam-course" data-id="${esc(course.id)}" type="button">Crear examen</button><button class="icon-btn edit-published-course" data-id="${esc(course.id)}" type="button">Editar</button><button class="icon-btn delete delete-published-course" data-id="${esc(course.id)}" type="button">Eliminar</button></div></article>`;
   }).filter(Boolean);
   const local = drafts.courses.map(course => {
     const count = drafts.exams.filter(exam => exam.courseId === course.id).length;
-    if (!matches(course, "draft", count)) return "";
-    return `<article class="course-card draft-card"><div class="course-icon">${modernIcon("course")}</div><span class="status draft">Borrador local</span><h3>${esc(course.name)}</h3><p>${esc(course.description || "Sin descripción registrada")}</p><div class="course-meta"><span>${quantity(count, "borrador")}</span><span>${count ? quantity(count, "examen", "exámenes") : "Sin exámenes"}</span>${course.updatedAt ? `<span>Última actualización: ${shortDate(course.updatedAt)}</span>` : ""}</div><div class="card-actions"><button class="btn secondary edit-course" data-id="${esc(course.id)}">Continuar edición</button><button class="btn secondary export-course" data-id="${esc(course.id)}">Exportar JSON</button><button class="icon-btn delete delete-course" data-id="${esc(course.id)}">Eliminar borrador</button></div></article>`;
+    if (!matches(course, "draft")) return "";
+    return `<article class="course-card draft-card compact-course"><div class="course-card-head"><div class="course-icon">${modernIcon("course")}</div><div><h3>${esc(course.name)}</h3><span class="status draft">Borrador local</span></div></div><p>${esc(course.description || "Sin descripción registrada")}</p><div class="course-meta"><span>${count ? quantity(count, "examen", "exámenes") : "Sin exámenes"}</span>${course.updatedAt ? `<span>Actualizado: ${shortDate(course.updatedAt)}</span>` : ""}</div><div class="card-actions compact-actions"><button class="btn primary publish-course" data-id="${esc(course.id)}">Publicar curso</button><button class="btn secondary create-exam-course" data-id="${esc(course.id)}">Crear examen</button><button class="icon-btn edit-course" data-id="${esc(course.id)}">Editar</button><button class="icon-btn delete delete-course" data-id="${esc(course.id)}">Eliminar</button></div></article>`;
   }).filter(Boolean);
-  return published.concat(local).join("") || emptyCard("No se encontraron cursos con estos filtros.");
+  return published.concat(local).join("") || emptyCard("No se encontraron cursos.");
 }
 function renderTeacherExamCard(exam) {
   const course = findCourse(exam.courseId);
@@ -595,11 +586,34 @@ function bindTeacherActions() {
   $$(".delete-exam").forEach(button => button.addEventListener("click", () => deleteExamDraft(button.dataset.id)));
   $$(".export-draft").forEach(button => button.addEventListener("click", () => { openExamModal(button.dataset.id); setTimeout(exportCurrentExam, 50); }));
   $$(".export-course").forEach(button => button.addEventListener("click", () => exportCourseDraft(button.dataset.id)));
+  $$(".publish-course").forEach(button => button.addEventListener("click", () => publishCourseDraft(button.dataset.id, button)));
 }
 function exportCourseDraft(id) {
   const course = drafts.courses.find(item => item.id === id);
   if (!course) return;
   download(JSON.stringify({ schema_version: 1, id: course.id, name: course.name, description: course.description || "", teacher_name: course.teacherName || currentUser.name }, null, 2), `${slug(course.id)}.json`, "application/json;charset=utf-8");
+}
+function publishCourseDraft(id, button) {
+  const course = drafts.courses.find(item => item.id === id);
+  const exams = drafts.exams.filter(exam => exam.courseId === id);
+  if (!course) return;
+  if (!exams.length) { alert(`El curso ${course.name} necesita al menos un examen antes de preparar su publicación.`); return; }
+  button.disabled = true;
+  const bundle = {
+    schema_version: 1,
+    course: { id: course.id, name: course.name, description: course.description || "", teacher_name: course.teacherName || currentUser.name },
+    exams: exams.map(examToJsonSchema),
+    catalog_entry: {
+      id: course.id,
+      name: course.name,
+      description: course.description || "",
+      teacher_name: course.teacherName || currentUser.name,
+      exams: exams.map(exam => `./data/exams/${slug(exam.id)}.json`)
+    }
+  };
+  download(JSON.stringify(bundle, null, 2), `${slug(course.id)}-publicacion.json`, "application/json;charset=utf-8");
+  button.disabled = false;
+  alert(`Se preparó el archivo de publicación de ${course.name}. Súbelo al repositorio y registra sus exámenes en data/catalog.json para que sea visible a los alumnos. El borrador local se conservará hasta confirmar la publicación.`);
 }
 function fillTeacherFilters() {
   $("#teacher-course-filter").innerHTML = `<option value="">Todos los cursos</option>${publishedCourses.map(course => `<option value="${esc(course.id)}">${esc(course.name)}</option>`).join("")}`;
@@ -956,9 +970,10 @@ function openCourseModal(id = "") {
   $("#course-name").focus();
 }
 function toggleSidebar() {
-  const open = document.body.classList.toggle("sidebar-open");
-  $("#sidebar-toggle").setAttribute("aria-expanded", String(open));
-  $("#sidebar-toggle").setAttribute("aria-label", open ? "Cerrar menú" : "Abrir menú");
+  const mobile = matchMedia("(max-width: 900px)").matches;
+  const visible = mobile ? document.body.classList.toggle("sidebar-open") : !document.body.classList.toggle("sidebar-collapsed");
+  $("#sidebar-toggle").setAttribute("aria-expanded", String(visible));
+  $("#sidebar-toggle").setAttribute("aria-label", visible ? "Ocultar barra lateral" : "Mostrar barra lateral");
 }
 async function saveCourseDraft(event) {
   event.preventDefault();
