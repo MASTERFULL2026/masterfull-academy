@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "supabase/migrations/**"
+      - ".github/workflows/supabase-migrations.yml"
   workflow_dispatch:
 
 permissions:
@@ -22,7 +23,7 @@ jobs:
       - name: Instalar Supabase CLI
         uses: supabase/setup-cli@v2
         with:
-          version: latest
+          version: 2.109.1
 
       - name: Enlazar proyecto de Supabase
         env:
