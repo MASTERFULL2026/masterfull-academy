@@ -615,3 +615,44 @@ body { background: #edf2f7; }
   .app-shell-mode .filters { grid-template-columns: 1fr; }
   .app-shell-mode .stats { grid-template-columns: 1fr; }
 }
+
+/* Teacher dashboard clarity and responsive navigation */
+.sidebar-toggle { display: none; border: 0; color: #fff; background: transparent; font-size: 25px; cursor: pointer; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+.app-shell-mode .brand { padding: 6px 5px 34px; }
+.app-shell-mode .brand::after { left: 5px; top: 34px; }
+.app-shell-mode .user-identity { min-width: 0; }
+.app-shell-mode .user-email { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; opacity: .8; }
+.app-shell-mode .logout-btn { margin-top: 7px !important; border-top-color: #ffffff2c !important; }
+.app-shell-mode .dashboard-head { min-height: 106px; padding: 22px 27px; }
+.stats .stat-card { position: relative; display: flex; align-items: center; gap: 15px; min-height: 88px; padding: 17px 20px; overflow: hidden; color: var(--ink); text-align: left; border: 0; border-left: 4px solid #0891b2; border-radius: 15px; background: #fff; box-shadow: 0 8px 24px #1e293b0e; cursor: pointer; transition: transform .16s ease, box-shadow .16s ease; }
+.stats .stat-card:nth-child(2) { border-left-color: #f59e0b; }.stats .stat-card:nth-child(3) { border-left-color: #16a276; }
+.stats .stat-card:hover { transform: translateY(-2px); box-shadow: 0 13px 28px #1e293b17; }
+.stats .stat-card:focus-visible,.course-filter:focus-visible,.tab:focus-visible,.sidebar-toggle:focus-visible { outline: 3px solid #67e8f9; outline-offset: 2px; }
+.stats .stat-card > span:first-child { display: grid; place-items: center; width: 44px; height: 44px; flex: 0 0 auto; color: #0785a3; border-radius: 12px; background: #e6f7fb; }
+.stats .stat-card strong,.stats .stat-card small { display: block; }.stats .stat-card strong { font-size: 25px; }.stats .stat-card small { color: var(--muted); }
+.tab-count { display: inline-grid; min-width: 23px; height: 23px; margin-left: 5px; place-items: center; border-radius: 99px; color: inherit; background: #0f789116; font-size: 12px; }
+.tab.active .tab-count { background: #ffffff2e; }
+.app-shell-mode .tab.active { box-shadow: inset 0 -3px 0 #67e8f9,0 7px 15px #0e749025; }
+.course-tools { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 20px; padding: 12px; border-radius: 14px; background: #fff; box-shadow: 0 8px 24px #1e293b0b; }
+.course-tools input { flex: 1; max-width: 430px; margin: 0; }
+.course-filter-group { display: flex; gap: 5px; overflow-x: auto; }
+.course-filter { padding: 9px 13px; white-space: nowrap; color: #536176; border: 1px solid transparent; border-radius: 9px; background: #f1f5f9; cursor: pointer; }
+.course-filter.active { color: #fff; border-color: #0e7490; background: #0f7891; }
+.course-meta { display: grid; gap: 5px; padding: 12px 0; color: #536176; border-top: 1px solid var(--line); font-size: 13px; }
+.status.draft { color: #9a5b00; background: #fff4d6; }
+.card-grid > .empty { grid-column: 1 / -1; padding: 42px; border-radius: 14px; background: #fff; }
+@media (max-width:900px) {
+  .app-shell-mode .topbar { position: fixed; inset: 0 auto 0 0; width: min(310px,86vw); height: 100vh; padding: 20px; flex-direction: column; align-items: stretch; transform: translateX(-105%); transition: transform .2s ease; }
+  .app-shell-mode.sidebar-open .topbar { transform: translateX(0); }
+  .app-shell-mode .brand { padding: 6px 5px 34px; }.app-shell-mode .brand::after { display: block; }
+  .app-shell-mode #session-area { display: flex; flex: 1; align-items: flex-end; }
+  .app-shell-mode .user-menu { display: grid; width: 100%; grid-template-columns: 42px 1fr; padding-top: 18px; border-top: 1px solid #ffffff18; }
+  .app-shell-mode .user-menu .btn { grid-column: 1 / -1; width: 100%; font-size: 13px; }
+  .app-shell-mode .sidebar-toggle { position: fixed; z-index: 22; top: 13px; left: 14px; display: block; width: 43px; height: 43px; border-radius: 10px; background: #101f3b; box-shadow: 0 5px 15px #0f172a30; }
+  .app-shell-mode main { padding-top: 70px; }
+}
+@media (max-width:620px) {
+  .course-tools { align-items: stretch; flex-direction: column; }.course-tools input { max-width: none; }
+  .course-filter-group { width: 100%; }.course-card .card-actions > * { flex: 1 1 auto; }
+}

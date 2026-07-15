@@ -30,6 +30,7 @@ let soundEnabled = localStorage.getItem(SOUND_KEY) !== "false";
 let audioContext = null;
 let minuteWarningPlayed = false;
 let appReady = false;
+let teacherCourseFilter = "all";
 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
@@ -47,6 +48,8 @@ function esc(value) {
 }
 function empty(message, colspan = 1) { return `<tr><td colspan="${colspan}" class="empty">${esc(message)}</td></tr>`; }
 function emptyCard(message) { return `<div class="empty">${esc(message)}</div>`; }
+function quantity(value, singular, plural = `${singular}s`) { return `${value} ${value === 1 ? singular : plural}`; }
+function shortDate(value) { return value ? new Date(value).toLocaleDateString("es-PE") : ""; }
 function modernIcon(name) {
   const paths = {
     courses: `<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10M7 12h10M7 16h6"/>`,
@@ -58,7 +61,7 @@ function modernIcon(name) {
   const key = aliases[name] || name;
   return `<svg class="modern-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${paths[key] || paths.course}</svg>`;
 }
-function stat(label, value, icon) { return `<article><span>${modernIcon(icon)}</span><div><strong>${esc(value)}</strong><small>${esc(label)}</small></div></article>`; }
+function stat(label, value, icon, action = "") { return `<button class="stat-card" type="button" data-stat-action="${action}"><span>${modernIcon(icon)}</span><span><strong>${esc(value)}</strong><small>${esc(label)}</small></span></button>`; }
 function formatDate(value) { return value ? new Date(value).toLocaleString("es-PE") : "-"; }
 function csvCell(value) { return `"${String(value ?? "").replaceAll('"','""')}"`; }
 function slug(value) {
@@ -344,7 +347,7 @@ function renderApp() {
     show("auth-view");
     return;
   }
-  $("#session-area").innerHTML = `<div class="user-menu"><span class="user-avatar">${esc(currentUser.name.charAt(0).toUpperCase())}</span><span><strong>${esc(currentUser.name)}</strong><small>${currentUser.role === "teacher" ? "Profesor" : "Alumno"}</small></span><button id="sound-btn" class="btn ghost sound-btn" aria-pressed="${soundEnabled}" title="${soundEnabled ? "Silenciar sonidos" : "Activar sonidos"}">${soundEnabled ? "🔊 Sonido" : "🔇 Silenciado"}</button><button id="profile-btn" class="btn ghost">Mi perfil</button><button id="logout-btn" class="btn ghost">Salir</button></div>`;
+  $("#session-area").innerHTML = `<div class="user-menu"><span class="user-avatar">${esc(currentUser.name.charAt(0).toUpperCase())}</span><span class="user-identity"><strong>${esc(currentUser.name)}</strong><small>${currentUser.role === "teacher" ? "Profesor" : "Alumno"}</small><small class="user-email">${esc(currentUser.email || "")}</small></span><button id="sound-btn" class="btn ghost sound-btn" aria-pressed="${soundEnabled}" title="${soundEnabled ? "Silenciar sonidos" : "Activar sonidos"}">${soundEnabled ? "🔊 Sonido" : "🔇 Silenciado"}</button><button id="profile-btn" class="btn ghost">👤 Mi perfil</button><button id="logout-btn" class="btn ghost logout-btn">↪ Salir</button></div>`;
   $("#sound-btn").addEventListener("click", toggleSound);
   $("#profile-btn").addEventListener("click", openProfile);
   $("#logout-btn").addEventListener("click", logout);
@@ -352,6 +355,7 @@ function renderApp() {
 }
 
 function bindStaticEvents() {
+  $("#sidebar-toggle").addEventListener("click", toggleSidebar);
   $("#brand-link").addEventListener("click", event => {
     event.preventDefault();
     if (activeExam && timerInterval) { alert("No puedes salir mientras el examen está activo. Entrégalo para continuar."); return; }
@@ -367,6 +371,12 @@ function bindStaticEvents() {
   $("#login-form").addEventListener("submit", loginUser);
   $("#profile-form").addEventListener("submit", saveProfile);
   $("#new-course-btn").addEventListener("click", () => openCourseModal());
+  $("#course-search").addEventListener("input", renderTeacherCourseList);
+  $$(".course-filter").forEach(button => button.addEventListener("click", () => {
+    teacherCourseFilter = button.dataset.courseFilter;
+    $$(".course-filter").forEach(item => item.classList.toggle("active", item === button));
+    renderTeacherCourseList();
+  }));
   $("#new-exam-btn").addEventListener("click", () => openExamModal());
   $("#course-form").addEventListener("submit", saveCourseDraft);
   $("#exam-editor-form").addEventListener("submit", saveExamDraft);
@@ -492,7 +502,7 @@ async function refreshResults(showStatus = false) {
     const { data, error } = await sb.from("results").select("*").order("created_at", { ascending: false });
     if (error) throw error;
     results = (data || []).map(rowToGrade);
-    if (showStatus && status) status.textContent = `${results.length} resultado(s) cargado(s). Pendientes locales: ${pendingResults.length}.`;
+    if (showStatus && status) status.textContent = `${quantity(results.length, "resultado")} ${results.length === 1 ? "cargado" : "cargados"}. ${quantity(pendingResults.length, "pendiente local", "pendientes locales")}.`;
   } catch (error) {
     console.error("Resultados:", error);
     if (showStatus && status) status.textContent = translateError(error);
@@ -529,32 +539,53 @@ function renderTeacher() {
   $("#teacher-welcome").textContent = `Hola, ${currentUser.name}`;
   const exams = [...publishedExams, ...drafts.exams];
   $("#teacher-stats").innerHTML =
-    stat("Cursos publicados", publishedCourses.length, "▦") +
-    stat("Borradores locales", drafts.exams.length, "▤") +
-    stat("Resultados", results.length, "✓");
-  $("#teacher-course-list").innerHTML = renderTeacherCourses();
+    stat("Cursos publicados", publishedCourses.length, "courses", "published") +
+    stat("Borradores locales", drafts.courses.length, "exams", "draft") +
+    stat("Resultados", results.length, "results", "grades");
+  $("#courses-tab-count").textContent = publishedCourses.length + drafts.courses.length;
+  $("#exams-tab-count").textContent = exams.length;
+  $("#grades-tab-count").textContent = results.length;
+  renderTeacherCourseList(false);
   $("#teacher-exam-list").innerHTML = exams.length ? exams.map(renderTeacherExamCard).join("") : emptyCard("Todavía no hay exámenes publicados ni borradores locales.");
   fillTeacherFilters();
   renderTeacherGrades(filteredTeacherResults());
   bindTeacherActions();
+  $$(".stat-card").forEach(card => card.addEventListener("click", () => activateStat(card.dataset.statAction)));
+}
+function renderTeacherCourseList(bind = true) {
+  $("#teacher-course-list").innerHTML = renderTeacherCourses();
+  if (bind) bindTeacherActions();
+}
+function activateStat(action) {
+  if (action === "grades") { const tab = $('[data-teacher-tab="teacher-grades"]'); switchTab("teacher", "teacher-grades", tab); return; }
+  switchTab("teacher", "teacher-courses", $('[data-teacher-tab="teacher-courses"]'));
+  teacherCourseFilter = action;
+  $$(".course-filter").forEach(item => item.classList.toggle("active", item.dataset.courseFilter === action));
+  renderTeacherCourseList();
 }
 function renderTeacherCourses() {
+  const query = ($("#course-search")?.value || "").trim().toLocaleLowerCase("es");
+  const matches = (course, state, count) => (!query || `${course.name} ${course.description || ""} ${state}`.toLocaleLowerCase("es").includes(query)) && (teacherCourseFilter === "all" || teacherCourseFilter === state || (teacherCourseFilter === "empty" && count === 0));
   const published = publishedCourses.map(course => {
     const count = publishedExams.filter(exam => exam.courseId === course.id).length;
-    return `<article class="course-card"><div class="course-icon">${modernIcon("course")}</div><span class="badge">${count} examen(es)</span><h3>${esc(course.name)}</h3><p>${esc(course.description || "Sin descripción")} · Profesor: ${esc(course.teacherName)}</p><div class="status published">Publicado para todos</div><div class="card-actions"><button class="icon-btn edit-published-course" data-id="${esc(course.id)}" type="button">Editar</button><button class="icon-btn delete delete-published-course" data-id="${esc(course.id)}" type="button">Eliminar</button></div></article>`;
-  });
+    if (!matches(course, "published", count)) return "";
+    const updated = courseChanges.find(change => change.course_id === course.id)?.updated_at;
+    return `<article class="course-card"><div class="course-icon">${modernIcon("course")}</div><span class="status published">Publicado ✓</span><h3>${esc(course.name)}</h3><p>${esc(course.description || "Sin descripción registrada")}</p><div class="course-meta"><span>${quantity(count, "examen", "exámenes")}</span><span>0 borradores</span>${updated ? `<span>Última actualización: ${shortDate(updated)}</span>` : ""}</div><div class="card-actions"><button class="btn secondary view-course" type="button">Ver curso</button><button class="btn secondary create-exam-course" data-id="${esc(course.id)}" type="button">Crear examen</button><button class="icon-btn edit-published-course" data-id="${esc(course.id)}" type="button">Editar</button><button class="icon-btn delete delete-published-course" data-id="${esc(course.id)}" type="button">Eliminar</button></div></article>`;
+  }).filter(Boolean);
   const local = drafts.courses.map(course => {
     const count = drafts.exams.filter(exam => exam.courseId === course.id).length;
-    return `<article class="course-card draft-card"><div class="course-icon">${modernIcon("course")}</div><span class="badge">${count} borrador(es)</span><h3>${esc(course.name)}</h3><p>${esc(course.description || "Sin descripción")}</p><div class="notice compact">Borrador local. Todavía no está publicado para los alumnos.</div><div class="card-actions"><button class="btn secondary create-exam-course" data-id="${esc(course.id)}">Crear examen</button><button class="icon-btn edit-course" data-id="${esc(course.id)}">Editar</button><button class="icon-btn delete delete-course" data-id="${esc(course.id)}">Eliminar</button></div></article>`;
-  });
-  return published.concat(local).join("") || emptyCard("Crea un curso local o agrega cursos en data/catalog.json.");
+    if (!matches(course, "draft", count)) return "";
+    return `<article class="course-card draft-card"><div class="course-icon">${modernIcon("course")}</div><span class="status draft">Borrador local</span><h3>${esc(course.name)}</h3><p>${esc(course.description || "Sin descripción registrada")}</p><div class="course-meta"><span>${quantity(count, "borrador")}</span><span>${count ? quantity(count, "examen", "exámenes") : "Sin exámenes"}</span>${course.updatedAt ? `<span>Última actualización: ${shortDate(course.updatedAt)}</span>` : ""}</div><div class="card-actions"><button class="btn secondary edit-course" data-id="${esc(course.id)}">Continuar edición</button><button class="btn secondary export-course" data-id="${esc(course.id)}">Exportar JSON</button><button class="icon-btn delete delete-course" data-id="${esc(course.id)}">Eliminar borrador</button></div></article>`;
+  }).filter(Boolean);
+  return published.concat(local).join("") || emptyCard("No se encontraron cursos con estos filtros.");
 }
 function renderTeacherExamCard(exam) {
   const course = findCourse(exam.courseId);
   const isDraft = !publishedExams.some(item => item.id === exam.id);
-  return `<article class="course-card ${isDraft ? "draft-card" : ""}"><div class="status ${exam.published ? "published" : ""}">${isDraft ? "Borrador local" : "Publicado"}</div><span class="eyebrow">${esc(course?.name || "Curso no encontrado")}</span><h3>${esc(exam.title)}</h3><p>Banco: ${exam.questions.length} · Alumno: ${exam.questionsToShow} preguntas · ${exam.minutes} minutos · ${exam.attemptsAllowed} intento(s) · ${exam.optionCount} opciones</p><div class="card-actions">${isDraft ? `<button class="btn secondary edit-exam" data-id="${esc(exam.id)}">Editar</button><button class="btn secondary export-draft" data-id="${esc(exam.id)}">Exportar JSON</button><button class="icon-btn delete delete-exam" data-id="${esc(exam.id)}">Eliminar</button>` : ""}</div></article>`;
+  return `<article class="course-card ${isDraft ? "draft-card" : ""}"><div class="status ${exam.published ? "published" : ""}">${isDraft ? "Borrador local" : "Publicado"}</div><span class="eyebrow">${esc(course?.name || "Curso no encontrado")}</span><h3>${esc(exam.title)}</h3><p>Banco: ${quantity(exam.questions.length, "pregunta")} · Alumno: ${quantity(exam.questionsToShow, "pregunta")} · ${exam.minutes} minutos · ${quantity(exam.attemptsAllowed, "intento")} · ${exam.optionCount} opciones</p><div class="card-actions">${isDraft ? `<button class="btn secondary edit-exam" data-id="${esc(exam.id)}">Editar</button><button class="btn secondary export-draft" data-id="${esc(exam.id)}">Exportar JSON</button><button class="icon-btn delete delete-exam" data-id="${esc(exam.id)}">Eliminar</button>` : ""}</div></article>`;
 }
 function bindTeacherActions() {
+  $$(".view-course").forEach(button => button.addEventListener("click", () => switchTab("teacher", "teacher-exams", $('[data-teacher-tab="teacher-exams"]'))));
   $$(".create-exam-course").forEach(button => button.addEventListener("click", () => openExamModal(null, button.dataset.id)));
   $$(".edit-course").forEach(button => button.addEventListener("click", () => openCourseModal(button.dataset.id)));
   $$(".delete-course").forEach(button => button.addEventListener("click", () => deleteCourseDraft(button.dataset.id)));
@@ -563,6 +594,12 @@ function bindTeacherActions() {
   $$(".edit-exam").forEach(button => button.addEventListener("click", () => openExamModal(button.dataset.id)));
   $$(".delete-exam").forEach(button => button.addEventListener("click", () => deleteExamDraft(button.dataset.id)));
   $$(".export-draft").forEach(button => button.addEventListener("click", () => { openExamModal(button.dataset.id); setTimeout(exportCurrentExam, 50); }));
+  $$(".export-course").forEach(button => button.addEventListener("click", () => exportCourseDraft(button.dataset.id)));
+}
+function exportCourseDraft(id) {
+  const course = drafts.courses.find(item => item.id === id);
+  if (!course) return;
+  download(JSON.stringify({ schema_version: 1, id: course.id, name: course.name, description: course.description || "", teacher_name: course.teacherName || currentUser.name }, null, 2), `${slug(course.id)}.json`, "application/json;charset=utf-8");
 }
 function fillTeacherFilters() {
   $("#teacher-course-filter").innerHTML = `<option value="">Todos los cursos</option>${publishedCourses.map(course => `<option value="${esc(course.id)}">${esc(course.name)}</option>`).join("")}`;
@@ -918,10 +955,15 @@ function openCourseModal(id = "") {
   $("#course-modal").classList.remove("hidden");
   $("#course-name").focus();
 }
+function toggleSidebar() {
+  const open = document.body.classList.toggle("sidebar-open");
+  $("#sidebar-toggle").setAttribute("aria-expanded", String(open));
+  $("#sidebar-toggle").setAttribute("aria-label", open ? "Cerrar menú" : "Abrir menú");
+}
 async function saveCourseDraft(event) {
   event.preventDefault();
   const id = $("#course-id").value;
-  const course = { id: id || slug($("#course-name").value), name: $("#course-name").value.trim(), description: $("#course-description").value.trim(), teacherName: currentUser.name, local: true };
+  const course = { id: id || slug($("#course-name").value), name: $("#course-name").value.trim(), description: $("#course-description").value.trim(), teacherName: currentUser.name, local: true, updatedAt: nowIso() };
   if (id && publishedCourses.some(item => item.id === id)) {
     const submit = event.submitter;
     if (submit) submit.disabled = true;
@@ -949,7 +991,7 @@ async function deletePublishedCourse(id) {
   const course = publishedCourses.find(item => item.id === id);
   if (!course) return;
   const examCount = publishedExams.filter(exam => exam.courseId === id).length;
-  if (!confirm(`¿Eliminar “${course.name}” para todos los alumnos${examCount ? ` junto con sus ${examCount} examen(es)` : ""}? Las notas históricas se conservarán.`)) return;
+  if (!confirm(`¿Deseas eliminar el curso ${course.name}?\nEl curso dejará de mostrarse a los alumnos${examCount ? ` junto con ${quantity(examCount, "examen", "exámenes")}` : ""}, pero las notas anteriores y los resultados existentes se conservarán.`)) return;
   const { error } = await sb.from("course_changes").upsert({ course_id: id, name: course.name, description: course.description || "", deleted: true, updated_by: currentUser.id }, { onConflict: "course_id" });
   if (error) {
     console.error("Eliminar curso publicado:", error);
@@ -961,7 +1003,7 @@ async function deletePublishedCourse(id) {
 }
 function deleteCourseDraft(id) {
   const examCount = drafts.exams.filter(exam => exam.courseId === id).length;
-  if (!confirm(`¿Eliminar este curso local${examCount ? ` y sus ${examCount} examen(es)` : ""}?`)) return;
+  if (!confirm(`¿Eliminar este curso local${examCount ? ` y ${quantity(examCount, "examen", "exámenes")}` : ""}?`)) return;
   drafts.courses = drafts.courses.filter(course => course.id !== id);
   drafts.exams = drafts.exams.filter(exam => exam.courseId !== id);
   saveDrafts();
@@ -997,7 +1039,7 @@ function changeOptionCount() {
     if (question.correct >= builderOptionCount) { question.correct = 0; resetAnswers++; }
   });
   renderBuilder();
-  $("#option-count-message").textContent = `Todas las preguntas usarán ${builderOptionCount} opciones.${resetAnswers ? ` Se reinició la respuesta correcta de ${resetAnswers} pregunta(s).` : ""}`;
+  $("#option-count-message").textContent = `Todas las preguntas usarán ${builderOptionCount} opciones.${resetAnswers ? ` Se reinició la respuesta correcta de ${quantity(resetAnswers, "pregunta")}.` : ""}`;
 }
 function setQuestionMode(panelId) {
   $$(".question-mode").forEach(button => button.classList.toggle("active", button.dataset.questionMode === panelId));
@@ -1048,7 +1090,7 @@ async function importQuestions(event) {
     const imported = list.map((item, index) => normalizeImportedQuestion(item, index, builderOptionCount));
     builderQuestions = [...builderQuestions, ...imported];
     $("#import-message").className = "success";
-    $("#import-message").textContent = `Se importaron ${imported.length} pregunta(s).`;
+    $("#import-message").textContent = `Se importaron ${quantity(imported.length, "pregunta")}.`;
     renderBuilder();
   } catch (error) {
     console.error("Importación:", error);
