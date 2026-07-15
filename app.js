@@ -66,6 +66,7 @@ function slug(value) {
 }
 function show(id) {
   $$(".view").forEach(view => view.classList.toggle("active", view.id === id));
+  document.body.classList.toggle("app-shell-mode", ["teacher-view","student-view"].includes(id));
   document.body.classList.toggle("exam-in-progress", id === "exam-view");
   document.body.classList.toggle("student-game-mode", currentUser?.role === "student" && ["student-view","exam-view","result-view"].includes(id));
   document.body.classList.toggle("result-game-mode", id === "result-view");
