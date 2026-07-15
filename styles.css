@@ -639,6 +639,11 @@ body { background: #edf2f7; }
 .course-publish-status { flex: 1; margin: 0; color: #65758a; font-size: 13px; text-align: right; }
 .course-publish-status.success { color: #087657; font-weight: 650; }
 .course-publish-status.error { color: #c9364a; font-weight: 650; }
+.publish-exam-options { display: grid; gap: 10px; margin: 18px 0; }
+.publish-exam-option { display: flex; align-items: center; gap: 12px; margin: 0; padding: 13px; border: 1px solid #dfe7ef; border-radius: 12px; background: #f8fbfd; cursor: pointer; }
+.publish-exam-option input { width: 18px; height: 18px; margin: 0; accent-color: #0891b2; }
+.publish-exam-option span { display: grid; gap: 3px; }
+.publish-exam-option small { color: #65758a; }
 .app-shell-mode #teacher-stats { grid-template-columns: repeat(2,1fr); }
 .app-shell-mode .compact-course { min-height: 0; padding: 18px; }
 .course-card-head { display: flex; align-items: center; gap: 12px; }

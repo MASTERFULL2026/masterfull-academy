@@ -26,6 +26,7 @@ let secondsLeft = 0;
 let examStartedAt = null;
 let activeSubmissionId = null;
 let finishingExam = false;
+let publishingCourseId = null;
 let builderQuestions = [];
 let builderOptionCount = 5;
 let soundEnabled = localStorage.getItem(SOUND_KEY) !== "false";
@@ -234,15 +235,29 @@ async function loadCourseChanges() {
   applyCourseChanges();
 }
 async function loadDynamicCourses() {
-  const { data, error } = await sb.from("published_courses").select("course_id, name, description, teacher_name, exams, updated_at").eq("published", true);
+  const [courseResponse, examResponse, questionResponse] = await Promise.all([
+    sb.from("academy_courses").select("course_id, name, description, teacher_name, updated_at").eq("published", true),
+    sb.from("academy_exams").select("exam_id, course_id, title, minutes, questions_to_show, attempts_allowed, option_count").eq("published", true),
+    sb.from("academy_questions").select("exam_id, question_id, position, text, image, options, correct").eq("published", true).order("position", { ascending: true })
+  ]);
+  const error = courseResponse.error || examResponse.error || questionResponse.error;
   if (error) {
-    if (String(error.code) !== "42P01") console.error("No se pudieron cargar los cursos publicados desde Supabase:", error);
+    if (String(error.code) !== "42P01") console.error("No se pudieron cargar los cursos normalizados desde Supabase:", error);
     dynamicCourses = [];
     dynamicExams = [];
     return;
   }
-  dynamicCourses = (data || []).map(row => ({ id: row.course_id, name: row.name, description: row.description || "", teacherName: row.teacher_name || "Profesor", updatedAt: row.updated_at, dynamic: true }));
-  dynamicExams = (data || []).flatMap(row => (Array.isArray(row.exams) ? row.exams : []).map((exam, index) => normalizeExam(exam, `Supabase: ${row.name}`, row.course_id, index)));
+  dynamicCourses = (courseResponse.data || []).map(row => ({ id: row.course_id, name: row.name, description: row.description || "", teacherName: row.teacher_name || "Profesor", updatedAt: row.updated_at, dynamic: true }));
+  const questionsByExam = new Map();
+  (questionResponse.data || []).forEach(row => {
+    if (!questionsByExam.has(row.exam_id)) questionsByExam.set(row.exam_id, []);
+    questionsByExam.get(row.exam_id).push({ id: row.question_id, text: row.text, image: row.image || "", options: row.options, correct: row.correct });
+  });
+  dynamicExams = (examResponse.data || []).map(row => normalizeExam({
+    id: row.exam_id, course_id: row.course_id, title: row.title, minutes: row.minutes,
+    questions_to_show: row.questions_to_show, attempts_allowed: row.attempts_allowed,
+    option_count: row.option_count, published: true, questions: questionsByExam.get(row.exam_id) || []
+  }, `Supabase: ${row.title}`, row.course_id));
 }
 
 async function normalizeCatalog(raw) {
@@ -391,6 +406,7 @@ function bindStaticEvents() {
   $("#course-search").addEventListener("input", renderTeacherCourseList);
   $("#new-exam-btn").addEventListener("click", () => openExamModal());
   $("#course-form").addEventListener("submit", saveCourseDraft);
+  $("#publish-course-form").addEventListener("submit", publishSelectedCourseExams);
   $("#exam-editor-form").addEventListener("submit", saveExamDraft);
   $("#editor-option-count").addEventListener("change", changeOptionCount);
   $("#add-question-btn").addEventListener("click", addBuilderQuestion);
@@ -604,45 +620,71 @@ function bindTeacherActions() {
   $$(".delete-exam").forEach(button => button.addEventListener("click", () => deleteExamDraft(button.dataset.id)));
   $$(".export-draft").forEach(button => button.addEventListener("click", () => { openExamModal(button.dataset.id); setTimeout(exportCurrentExam, 50); }));
   $$(".export-course").forEach(button => button.addEventListener("click", () => exportCourseDraft(button.dataset.id)));
-  $$(".publish-course").forEach(button => button.addEventListener("click", () => publishCourseDraft(button.dataset.id, button)));
+  $$(".publish-course").forEach(button => button.addEventListener("click", () => openPublishCourseModal(button.dataset.id)));
 }
 function exportCourseDraft(id) {
   const course = drafts.courses.find(item => item.id === id);
   if (!course) return;
   download(JSON.stringify({ schema_version: 1, id: course.id, name: course.name, description: course.description || "", teacher_name: course.teacherName || currentUser.name }, null, 2), `${slug(course.id)}.json`, "application/json;charset=utf-8");
 }
-async function publishCourseDraft(id, button) {
+function openPublishCourseModal(id) {
   const course = drafts.courses.find(item => item.id === id);
   const exams = drafts.exams.filter(exam => exam.courseId === id);
   if (!course) return;
+  if (!exams.length) {
+    const status = $("#course-publish-status");
+    status.className = "course-publish-status error";
+    status.textContent = "Debes publicar al menos un examen antes de publicar el curso.";
+    return;
+  }
+  publishingCourseId = id;
+  $("#publish-course-title").textContent = `Publicar ${course.name}`;
+  $("#publish-exam-options").innerHTML = exams.map(exam => `<label class="publish-exam-option"><input type="checkbox" name="publish-exam" value="${esc(exam.id)}" checked><span><strong>${esc(exam.title)}</strong><small>${quantity(exam.questions.length, "pregunta")} · ${exam.minutes} min</small></span></label>`).join("");
+  $("#publish-course-error").textContent = "";
+  $("#publish-course-modal").classList.remove("hidden");
+}
+async function publishSelectedCourseExams(event) {
+  event.preventDefault();
+  const courseId = publishingCourseId;
+  const course = drafts.courses.find(item => item.id === courseId);
+  const selectedIds = new Set($$('input[name="publish-exam"]:checked').map(input => input.value));
+  const exams = drafts.exams.filter(exam => exam.courseId === courseId && selectedIds.has(exam.id));
+  if (!course) return;
+  if (!exams.length) { $("#publish-course-error").textContent = "Debes publicar al menos un examen antes de publicar el curso."; return; }
+  const button = event.submitter;
   const status = $("#course-publish-status");
-  if (!exams.length) { status.className = "course-publish-status error"; status.textContent = `El curso ${course.name} necesita al menos un examen antes de publicarse.`; return; }
   button.disabled = true;
-  status.className = "course-publish-status";
-  status.textContent = `Publicando ${course.name}...`;
+  $("#publish-course-error").textContent = "Publicando y verificando...";
   try {
-    const { error } = await sb.from("published_courses").upsert({
-      course_id: course.id,
-      name: course.name,
-      description: course.description || "",
-      teacher_name: course.teacherName || currentUser.name,
-      exams: exams.map(examToJsonSchema),
-      published: true,
-      updated_by: currentUser.id
-    }, { onConflict: "course_id" });
+    const payload = {
+      course: { id: course.id, name: course.name, description: course.description || "", teacher_name: course.teacherName || currentUser.name },
+      exams: exams.map(exam => ({ ...examToJsonSchema(exam), published: true }))
+    };
+    const { data, error } = await sb.rpc("publish_academy_course", { payload });
     if (error) throw error;
-    drafts.courses = drafts.courses.filter(item => item.id !== id);
-    drafts.exams = drafts.exams.filter(exam => exam.courseId !== id);
-    saveDrafts();
+    if (!data || data.course_id !== course.id || Number(data.exam_count) !== exams.length) throw new Error("Supabase no confirmó todos los exámenes seleccionados.");
+
     await loadCourseChanges();
+    const verifiedCourse = publishedCourses.find(item => item.id === course.id && item.dynamic);
+    const verifiedExams = exams.filter(exam => publishedExams.some(item => item.id === exam.id && item.courseId === course.id));
+    const expectedQuestions = exams.reduce((total, exam) => total + exam.questions.length, 0);
+    const verifiedQuestions = verifiedExams.reduce((total, exam) => total + (publishedExams.find(item => item.id === exam.id)?.questions.length || 0), 0);
+    if (!verifiedCourse || verifiedExams.length !== exams.length || verifiedQuestions !== expectedQuestions) throw new Error("La publicación no pudo recuperarse completa desde Supabase. El borrador se conservó.");
+
+    drafts.courses = drafts.courses.filter(item => item.id !== courseId);
+    drafts.exams = drafts.exams.filter(exam => !selectedIds.has(exam.id));
+    saveDrafts();
+    closeModal("publish-course-modal");
+    publishingCourseId = null;
     renderTeacher();
     const refreshedStatus = $("#course-publish-status");
     refreshedStatus.className = "course-publish-status success";
-    refreshedStatus.textContent = `${course.name} se publicó correctamente y ya está disponible para los alumnos.`;
+    refreshedStatus.textContent = `${course.name} y ${quantity(exams.length, "examen")} se publicaron y verificaron correctamente.`;
   } catch (error) {
     console.error("Publicar curso:", error);
+    $("#publish-course-error").textContent = error.message || translateError(error);
     status.className = "course-publish-status error";
-    status.textContent = `No se pudo publicar: ${translateError(error)}`;
+    status.textContent = "La publicación no se completó. El borrador local permanece intacto.";
   } finally {
     button.disabled = false;
   }

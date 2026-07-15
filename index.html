@@ -138,6 +138,14 @@
     </div>
   </div>
 
+  <div id="publish-course-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="publish-course-title">
+    <div class="modal-card panel"><button class="modal-close" data-close="publish-course-modal" type="button" aria-label="Cerrar">×</button>
+      <span class="eyebrow">PUBLICACIÓN SEGURA</span><h2 id="publish-course-title">Publicar curso</h2>
+      <p class="muted">Selecciona los exámenes que estarán disponibles inmediatamente para los alumnos.</p>
+      <form id="publish-course-form"><div id="publish-exam-options" class="publish-exam-options"></div><p id="publish-course-error" class="error" aria-live="polite"></p><button class="btn primary full" type="submit">Publicar curso y exámenes</button></form>
+    </div>
+  </div>
+
   <div id="exam-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="exam-modal-title">
     <div class="modal-card panel large"><button class="modal-close" data-close="exam-modal">×</button>
       <div class="editor-sticky-bar">
@@ -227,6 +235,6 @@
   <footer>Masterfull Academy · Plataforma educativa digital.</footer>
   <script src="config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="app.js?v=20260715-2"></script>
+  <script src="app.js?v=20260715-3"></script>
 </body>
 </html>

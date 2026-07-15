@@ -30,7 +30,15 @@ jobs:
           version: 2.109.1
 
       - name: Enlazar proyecto de Supabase
-        run: supabase link --project-ref "$SUPABASE_PROJECT_ID" --password "$SUPABASE_DB_PASSWORD"
+        run: |
+          for attempt in 1 2 3; do
+            if supabase link --project-ref "$SUPABASE_PROJECT_ID" --password "$SUPABASE_DB_PASSWORD"; then
+              exit 0
+            fi
+            echo "El enlace con Supabase falló (intento $attempt de 3)."
+            sleep 5
+          done
+          exit 1
 
       - name: Aplicar migraciones pendientes
         run: supabase db push --password "$SUPABASE_DB_PASSWORD"
