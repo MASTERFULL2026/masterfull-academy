@@ -1,3 +1,4 @@
+-- Global course overrides used by the teacher dashboard.
 create table if not exists public.course_changes (
   course_id text primary key,
   name text,
