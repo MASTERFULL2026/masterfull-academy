@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Plataforma de cursos y exámenes para profesores y alumnos.">
   <title>Masterfull Academy | Cursos y exámenes</title>
-  <link rel="stylesheet" href="styles.css?v=20260715-2">
+  <link rel="stylesheet" href="styles.css?v=20260715-3">
 </head>
 <body class="session-loading">
   <header class="topbar">
@@ -206,17 +206,14 @@
     </div>
   </div>
   <div id="profile-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="profile-modal-title">
-    <div class="modal-card panel">
+    <div class="modal-card panel profile-modal-card">
       <button class="modal-close" data-close="profile-modal" type="button" aria-label="Cerrar">×</button>
-      <span class="eyebrow">MI CUENTA</span>
-      <h2 id="profile-modal-title">Editar perfil</h2>
-      <p class="muted">Actualiza tus datos personales o cambia tu contraseña.</p>
+      <div class="profile-modal-head"><span class="eyebrow">CONFIGURACIÓN DE CUENTA</span><h2 id="profile-modal-title">Mi perfil</h2><p class="muted">Administra tus datos personales y la seguridad de tu cuenta.</p></div>
       <form id="profile-form">
-        <label>Nombre completo<input id="profile-name" required maxlength="80"></label>
-        <label>Correo electrónico<input id="profile-email" type="email" required autocomplete="email"></label>
-        <label>Tipo de cuenta<input id="profile-role" disabled></label>
+        <div class="profile-details-grid"><label>Nombre completo<input id="profile-name" required maxlength="80"></label><label>Correo electrónico<input id="profile-email" type="email" required autocomplete="email"></label><label>Tipo de cuenta<input id="profile-role" disabled></label></div>
         <div class="profile-password-section">
-          <h3>Cambiar contraseña <small>(opcional)</small></h3>
+          <div class="profile-section-title"><div><h3>Seguridad</h3><p>Cambia tu contraseña únicamente cuando sea necesario.</p></div><span>Opcional</span></div>
+          <div class="profile-password-grid">
           <label>Contraseña actual
             <span class="password-field"><input id="profile-current-password" type="password" autocomplete="current-password" placeholder="Necesaria para cambiarla"><button class="password-toggle" type="button" data-password="profile-current-password" aria-label="Mostrar contraseña" title="Mostrar contraseña"></button></span>
           </label>
@@ -226,15 +223,15 @@
           <label>Confirmar nueva contraseña
             <span class="password-field"><input id="profile-confirm-password" type="password" minlength="8" autocomplete="new-password" placeholder="Escríbela nuevamente"><button class="password-toggle" type="button" data-password="profile-confirm-password" aria-label="Mostrar contraseña" title="Mostrar contraseña"></button></span>
           </label>
+          </div>
         </div>
-        <p id="profile-message" aria-live="polite"></p>
-        <button class="btn primary full" type="submit">Guardar perfil</button>
+        <div class="profile-form-footer"><p id="profile-message" aria-live="polite"></p><button class="btn primary" type="submit">Guardar cambios</button></div>
       </form>
     </div>
   </div>
   <footer>Masterfull Academy · Plataforma educativa digital.</footer>
   <script src="config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="app.js?v=20260715-3"></script>
+  <script src="app.js?v=20260715-4"></script>
 </body>
 </html>

@@ -223,6 +223,15 @@ function applyCourseChanges() {
   dynamicExams.forEach(exam => examsById.set(exam.id, exam));
   publishedExams = [...examsById.values()].filter(exam => visibleCourseIds.has(exam.courseId));
 }
+function menuIcon(name) {
+  const paths = {
+    sound: `<path d="M11 5 6.5 8.5H3v7h3.5L11 19z"/><path d="M15 9.5a4 4 0 0 1 0 5M18 7a7.5 7.5 0 0 1 0 10"/>`,
+    muted: `<path d="M11 5 6.5 8.5H3v7h3.5L11 19z"/><path d="m16 10 5 5m0-5-5 5"/>`,
+    profile: `<circle cx="12" cy="8" r="4"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/>`,
+    logout: `<path d="M10 5H5v14h5M14 8l4 4-4 4M8 12h10"/>`
+  };
+  return `<svg class="menu-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${paths[name]}</svg>`;
+}
 
 async function loadCourseChanges() {
   if (!sb || !currentUser) return;
@@ -379,7 +388,7 @@ function renderApp() {
     show("auth-view");
     return;
   }
-  $("#session-area").innerHTML = `<div class="user-menu"><span class="user-avatar">${esc(currentUser.name.charAt(0).toUpperCase())}</span><span class="user-identity"><strong>${esc(currentUser.name)}</strong><small>${currentUser.role === "teacher" ? "Profesor" : "Alumno"}</small><small class="user-email">${esc(currentUser.email || "")}</small></span><button id="sound-btn" class="btn ghost sound-btn" aria-pressed="${soundEnabled}" title="${soundEnabled ? "Silenciar sonidos" : "Activar sonidos"}">${soundEnabled ? "🔊 Sonido" : "🔇 Silenciado"}</button><button id="profile-btn" class="btn ghost">👤 Mi perfil</button><button id="logout-btn" class="btn ghost logout-btn">↪ Salir</button></div>`;
+  $("#session-area").innerHTML = `<div class="user-menu"><span class="user-avatar">${esc(currentUser.name.charAt(0).toUpperCase())}</span><span class="user-identity"><strong>${esc(currentUser.name)}</strong><small>${currentUser.role === "teacher" ? "Profesor" : "Alumno"}</small><small class="user-email">${esc(currentUser.email || "")}</small></span><div class="user-actions"><button id="sound-btn" class="btn ghost sound-btn" aria-pressed="${soundEnabled}" title="${soundEnabled ? "Silenciar sonidos" : "Activar sonidos"}">${menuIcon(soundEnabled ? "sound" : "muted")}<span>${soundEnabled ? "Sonido activado" : "Sonido silenciado"}</span></button><button id="profile-btn" class="btn ghost">${menuIcon("profile")}<span>Mi perfil</span></button><button id="logout-btn" class="btn ghost logout-btn">${menuIcon("logout")}<span>Cerrar sesión</span></button></div></div>`;
   $("#sound-btn").addEventListener("click", toggleSound);
   $("#profile-btn").addEventListener("click", openProfile);
   $("#logout-btn").addEventListener("click", logout);
