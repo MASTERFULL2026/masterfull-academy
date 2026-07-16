@@ -645,7 +645,10 @@ function renderTeacherCourses() {
 function renderTeacherExamCard(exam) {
   const course = findCourse(exam.courseId);
   const isDraft = !publishedExams.some(item => item.id === exam.id);
-  return `<article class="course-card exam-management-card ${isDraft ? "draft-card" : ""}"><div class="exam-card-header"><span class="exam-course-name">${esc(course?.name || "Curso no encontrado")}</span><span class="status ${exam.published ? "published" : ""}">${isDraft ? "Borrador local" : "Publicado"}</span></div><h3>${esc(exam.title)}</h3><div class="exam-core-stats"><span><small>Preguntas</small><strong>${exam.questionsToShow}</strong></span><span><small>Duración</small><strong>${exam.minutes} min</strong></span><span><small>Intentos</small><strong>${exam.attemptsAllowed}</strong></span></div><div class="exam-detail-row"><span>Banco: <strong>${quantity(exam.questions.length, "pregunta")}</strong></span><span><strong>${exam.optionCount}</strong> opciones por pregunta</span></div>${isDraft ? `<div class="card-actions"><button class="btn secondary edit-exam" data-id="${esc(exam.id)}">Editar</button><button class="btn secondary export-draft" data-id="${esc(exam.id)}">Exportar JSON</button><button class="icon-btn delete delete-exam" data-id="${esc(exam.id)}">Eliminar</button></div>` : ""}</article>`;
+  const actions = isDraft
+    ? `<button class="btn secondary edit-exam" data-id="${esc(exam.id)}" type="button">Editar</button><button class="btn secondary export-draft" data-id="${esc(exam.id)}" type="button">Exportar JSON</button><button class="icon-btn delete delete-exam" data-id="${esc(exam.id)}" type="button">Eliminar</button>`
+    : `<button class="btn secondary edit-exam" data-id="${esc(exam.id)}" type="button">Modificar</button>`;
+  return `<article class="course-card exam-management-card ${isDraft ? "draft-card" : ""}"><div class="exam-card-header"><span class="exam-course-name">${esc(course?.name || "Curso no encontrado")}</span><span class="status ${exam.published ? "published" : ""}">${isDraft ? "Borrador local" : "Publicado"}</span></div><h3>${esc(exam.title)}</h3><div class="exam-core-stats"><span><small>Preguntas</small><strong>${exam.questionsToShow}</strong></span><span><small>Duración</small><strong>${exam.minutes} min</strong></span><span><small>Intentos</small><strong>${exam.attemptsAllowed}</strong></span></div><div class="exam-detail-row"><span>Banco: <strong>${quantity(exam.questions.length, "pregunta")}</strong></span><span><strong>${exam.optionCount}</strong> opciones por pregunta</span></div><div class="card-actions exam-card-actions">${actions}</div></article>`;
 }
 function bindTeacherActions() {
   $$("[data-overview-tab]").forEach(button => button.addEventListener("click", () => switchTab("teacher", button.dataset.overviewTab, $(`[data-teacher-tab="${button.dataset.overviewTab}"]`))));
@@ -1144,8 +1147,10 @@ function deleteCourseDraft(id) {
 function openExamModal(id = null, courseId = null) {
   const courses = [...publishedCourses, ...drafts.courses];
   if (!courses.length) { alert("Primero crea un curso local o agrega cursos en data/catalog.json."); openCourseModal(); return; }
-  const exam = drafts.exams.find(item => item.id === id);
-  $("#exam-modal-title").textContent = exam ? "Editar borrador de examen" : "Crear borrador de examen";
+  const localExam = drafts.exams.find(item => item.id === id);
+  const publishedExam = publishedExams.find(item => item.id === id);
+  const exam = localExam || publishedExam;
+  $("#exam-modal-title").textContent = publishedExam ? "Modificar examen publicado" : localExam ? "Editar borrador de examen" : "Crear borrador de examen";
   $("#editor-exam-id").value = exam?.id || "";
   $("#editor-course").innerHTML = courses.map(course => `<option value="${esc(course.id)}">${esc(course.name)}</option>`).join("");
   $("#editor-course").value = exam?.courseId || courseId || courses[0].id;
@@ -1288,12 +1293,50 @@ function validateCurrentExam(showMessage = false) {
     return null;
   }
 }
-function saveExamDraft(event) {
+async function saveExamDraft(event) {
   event.preventDefault();
   const exam = validateCurrentExam(false);
   if (!exam) return;
   const id = $("#editor-exam-id").value;
-  if (id) drafts.exams = drafts.exams.map(item => item.id === id ? exam : item); else drafts.exams.push(exam);
+  const publishedExam = publishedExams.find(item => item.id === id);
+  if (publishedExam) {
+    const submit = event.submitter || $(".editor-save");
+    const course = findCourse(exam.courseId);
+    if (!sb || !course) {
+      $("#exam-editor-error").textContent = "No se pudo conectar el examen con su curso publicado.";
+      return;
+    }
+    if (submit) submit.disabled = true;
+    $("#exam-editor-error").className = "muted";
+    $("#exam-editor-error").textContent = "Guardando y verificando los cambios...";
+    try {
+      const payload = {
+        course: { id: course.id, name: course.name, description: course.description || "", teacher_name: course.teacherName || currentUser.name },
+        exams: [{ ...examToJsonSchema(exam), published: true }]
+      };
+      const { data, error } = await sb.rpc("publish_academy_course", { payload });
+      if (error) throw error;
+      if (!data || data.course_id !== course.id || Number(data.exam_count) !== 1) throw new Error("Supabase no confirmó la modificación del examen.");
+      await loadCourseChanges();
+      const verified = publishedExams.find(item => item.id === exam.id && item.courseId === exam.courseId);
+      if (!verified || verified.title !== exam.title || verified.minutes !== exam.minutes || verified.questions.length !== exam.questions.length) {
+        throw new Error("No se pudieron verificar todos los cambios del examen publicado.");
+      }
+      drafts.exams = drafts.exams.filter(item => item.id !== exam.id);
+      saveDrafts();
+      closeModal("exam-modal");
+      renderTeacher();
+    } catch (error) {
+      console.error("Modificar examen publicado:", error);
+      $("#exam-editor-error").className = "error";
+      $("#exam-editor-error").textContent = error.message || translateError(error);
+    } finally {
+      if (submit) submit.disabled = false;
+    }
+    return;
+  }
+  const draftIndex = drafts.exams.findIndex(item => item.id === exam.id);
+  if (draftIndex >= 0) drafts.exams[draftIndex] = exam; else drafts.exams.push(exam);
   saveDrafts();
   closeModal("exam-modal");
   renderTeacher();

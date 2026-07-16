@@ -1417,6 +1417,32 @@ body,.app-shell-mode main { background: #f4f7fa; }
 .exam-detail-row { display: flex; flex-wrap: wrap; gap: 5px 16px; margin-top: 12px; color: #7b8897; font-size: 10.5px; line-height: 1.45; }
 .exam-detail-row strong { color: #596a7c; font-weight: 550; }
 .exam-management-card > .card-actions { margin-top: 15px; padding-top: 13px; border-top: 1px solid #edf1f4; }
+.exam-management-card > .exam-card-actions { justify-content: flex-start; gap: 7px; }
+.exam-management-card > .exam-card-actions .btn,
+.exam-management-card > .exam-card-actions .icon-btn {
+  flex: 0 0 auto;
+  min-height: 30px;
+  padding: 5px 9px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+/* Acciones discretas en la tabla de notas del alumno */
+.app-shell-mode #student-grades .review-attempt {
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 8px;
+  color: #176b7c;
+  background: #edf6f8;
+  box-shadow: none;
+  font-size: 11.5px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.app-shell-mode #student-grades .review-attempt:hover { color: #0e5d6d; background: #e1f0f3; }
 
 /* Editor de exámenes claro y profesional */
 .exam-editor-card {
