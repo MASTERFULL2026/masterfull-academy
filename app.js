@@ -430,10 +430,6 @@ function bindStaticEvents() {
   $("#add-question-btn").addEventListener("click", addBuilderQuestion);
   $("#generate-questions-btn").addEventListener("click", generateQuestions);
   $("#import-questions").addEventListener("change", importQuestions);
-  $("#validate-exam-json").addEventListener("click", () => validateCurrentExam(true));
-  $("#export-exam-json").addEventListener("click", exportCurrentExam);
-  $("#download-template-json").addEventListener("click", downloadTemplateJson);
-  $("#copy-catalog-path").addEventListener("click", copyCatalogPath);
   $("#take-exam-form").addEventListener("submit", event => {
     event.preventDefault();
     if (confirm("¿Deseas entregar el examen con tus respuestas actuales?")) finishExam(false);

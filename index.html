@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Plataforma de cursos y exámenes para profesores y alumnos.">
   <title>Masterfull Academy | Cursos y exámenes</title>
-  <link rel="stylesheet" href="styles.css?v=20260716-6">
+  <link rel="stylesheet" href="styles.css?v=20260716-7">
 </head>
 <body class="session-loading">
   <header class="topbar">
@@ -156,41 +156,39 @@
   </div>
 
   <div id="exam-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="exam-modal-title">
-    <div class="modal-card panel large"><button class="modal-close" data-close="exam-modal">×</button>
+    <div class="modal-card panel large exam-editor-card"><button class="modal-close" data-close="exam-modal" type="button" aria-label="Cerrar">×</button>
       <div class="editor-sticky-bar">
-        <div><span class="eyebrow">EDITOR DE NIVEL</span><h2 id="exam-modal-title">Crear examen</h2></div>
+        <div><span class="eyebrow">EDITOR DE EXÁMENES</span><h2 id="exam-modal-title">Crear examen</h2></div>
         <button class="btn primary editor-save" type="submit" form="exam-editor-form">Guardar examen</button>
       </div>
       <form id="exam-editor-form"><input type="hidden" id="editor-exam-id">
-        <div class="form-grid">
-          <label>Curso<select id="editor-course" required></select></label>
-          <label>Nombre del examen<input id="editor-title" required maxlength="80" placeholder="Ej. Examen parcial"></label>
-          <label>Tiempo (minutos)<input id="editor-minutes" type="number" min="1" max="180" value="20" required></label>
-          <label>Preguntas que verá el alumno<input id="editor-question-count" type="number" min="1" max="500" value="5" required></label>
-          <label>Intentos permitidos<input id="editor-attempts" type="number" min="1" max="20" value="1" required></label>
-          <label>Opciones por pregunta<select id="editor-option-count"><option value="2">2 opciones</option><option value="3">3 opciones</option><option value="4">4 opciones</option><option value="5" selected>5 opciones</option><option value="6">6 opciones</option><option value="7">7 opciones</option><option value="8">8 opciones</option></select></label>
-          <label>Estado<select id="editor-published"><option value="true">Publicado en JSON al exportar</option><option value="false">Borrador</option></select></label>
-        </div>
-        <p id="option-count-message" class="notice compact">Borrador local. Todavía no está publicado para los alumnos. Exporta el JSON y súbelo a GitHub para publicarlo.</p>
-        <div class="export-actions">
-          <button class="btn secondary" id="validate-exam-json" type="button">Validar JSON</button>
-          <button class="btn secondary" id="export-exam-json" type="button">Exportar examen JSON</button>
-          <button class="btn secondary" id="download-template-json" type="button">Descargar plantilla JSON</button>
-          <button class="btn secondary" id="copy-catalog-path" type="button">Copiar ruta para catalog.json</button>
-        </div>
-        <div class="question-builder-head">
-          <h3>Preguntas <span id="builder-count" class="badge">0</span></h3>
-        </div>
-        <div class="question-mode-tabs" role="tablist" aria-label="Forma de agregar preguntas">
-          <button class="question-mode active" data-question-mode="manual-panel" type="button">✎ Escribir pregunta</button>
-          <button class="question-mode" data-question-mode="generator-panel" type="button">✦ Generar automáticamente</button>
-          <button class="question-mode" data-question-mode="import-panel" type="button">↑ Importar preguntas</button>
-        </div>
-        <div id="manual-panel" class="question-tool-panel active">
-          <div><strong>Escribir manualmente</strong><p>Crea una pregunta en blanco y completa su enunciado, alternativas y respuesta correcta.</p></div>
-          <button class="btn primary" id="add-question-btn" type="button">+ Nueva pregunta</button>
-        </div>
-        <div id="generator-panel" class="question-tool-panel generator-box">
+        <section class="editor-section editor-settings-section" aria-labelledby="editor-settings-title">
+          <div class="editor-section-head"><div><span class="eyebrow">CONFIGURACIÓN</span><h3 id="editor-settings-title">Datos del examen</h3></div><p>Define cómo se presentará la evaluación al alumno.</p></div>
+          <div class="form-grid">
+            <label>Curso<select id="editor-course" required></select></label>
+            <label class="field-span-2">Nombre del examen<input id="editor-title" required maxlength="80" placeholder="Ej. Examen parcial"></label>
+            <label>Tiempo (minutos)<input id="editor-minutes" type="number" min="1" max="180" value="20" required></label>
+            <label>Preguntas del examen<input id="editor-question-count" type="number" min="1" max="500" value="5" required></label>
+            <label>Intentos permitidos<input id="editor-attempts" type="number" min="1" max="20" value="1" required></label>
+            <label>Opciones por pregunta<select id="editor-option-count"><option value="2">2 opciones</option><option value="3">3 opciones</option><option value="4">4 opciones</option><option value="5" selected>5 opciones</option><option value="6">6 opciones</option><option value="7">7 opciones</option><option value="8">8 opciones</option></select></label>
+            <label class="field-span-2">Estado al publicar<select id="editor-published"><option value="true">Disponible para alumnos</option><option value="false">Mantener como borrador</option></select></label>
+          </div>
+          <p id="option-count-message" class="sr-only" aria-live="polite"></p>
+        </section>
+        <section class="editor-section editor-questions-section" aria-labelledby="editor-questions-title">
+          <div class="question-builder-head">
+            <div><span class="eyebrow">CONTENIDO</span><h3 id="editor-questions-title">Preguntas <span id="builder-count" class="badge">0</span></h3><p>Elige una forma de agregar preguntas al examen.</p></div>
+          </div>
+          <div class="question-mode-tabs" role="tablist" aria-label="Forma de agregar preguntas">
+            <button class="question-mode active" data-question-mode="manual-panel" type="button">Escribir manualmente</button>
+            <button class="question-mode" data-question-mode="generator-panel" type="button">Generar preguntas</button>
+            <button class="question-mode" data-question-mode="import-panel" type="button">Importar archivo</button>
+          </div>
+          <div id="manual-panel" class="question-tool-panel active">
+            <div><strong>Nueva pregunta</strong><p>Crea el enunciado, las alternativas y selecciona la respuesta correcta.</p></div>
+            <button class="btn primary" id="add-question-btn" type="button">Agregar pregunta</button>
+          </div>
+          <div id="generator-panel" class="question-tool-panel generator-box">
           <div class="generator-heading"><div><span class="eyebrow">GENERADOR AUTOMÁTICO</span><h3>Crear desde apuntes</h3></div></div>
           <p class="muted">Escribe una idea por línea usando <strong>concepto: definición</strong>. Ejemplo: <em>Triángulo: figura de tres lados</em>.</p>
           <label>Apuntes o contenido<textarea id="generator-content" rows="6" placeholder="Triángulo: figura geométrica de tres lados&#10;Cuadrado: figura de cuatro lados iguales&#10;Círculo: figura redonda sin lados&#10;Rectángulo: figura de cuatro lados y ángulos rectos"></textarea></label>
@@ -200,7 +198,7 @@
           </div>
           <p id="generator-message" class="error"></p>
         </div>
-        <div id="import-panel" class="question-tool-panel">
+          <div id="import-panel" class="question-tool-panel">
           <div class="import-info">
             <strong>Importar desde un archivo</strong>
             <p>Acepta campos en español o inglés: <code>pregunta</code>, <code>opciones</code> y <code>respuesta_correcta</code>.</p>
@@ -208,9 +206,10 @@
             <p id="import-message" aria-live="polite"></p>
           </div>
           <label class="btn primary file-label">Seleccionar archivo JSON<input id="import-questions" type="file" accept=".json,application/json"></label>
-        </div>
-        <div id="question-builder"></div>
-        <p id="exam-editor-error" class="error"></p>
+          </div>
+          <div id="question-builder"></div>
+          <p id="exam-editor-error" class="error"></p>
+        </section>
       </form>
     </div>
   </div>
@@ -241,6 +240,6 @@
   <footer>Masterfull Academy · Plataforma educativa digital.</footer>
   <script src="config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="app.js?v=20260716-6"></script>
+  <script src="app.js?v=20260716-7"></script>
 </body>
 </html>
