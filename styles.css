@@ -729,9 +729,12 @@ body.auth-game-mode {
   animation:none;
   transition:left .68s cubic-bezier(.68,-.08,.24,1.08);
 }
-.auth-game-mode .auth-layout.register-active .auth-copy { left:46%; }
-.auth-game-mode .auth-layout.register-active { min-height:720px; }
-.auth-game-mode .auth-layout.register-active .auth-card { left:0; }
+.auth-game-mode .auth-layout.register-active .auth-copy,
+.auth-game-mode .auth-layout:has(#register-form:not(.hidden)) .auth-copy { left:46%; }
+.auth-game-mode .auth-layout.register-active,
+.auth-game-mode .auth-layout:has(#register-form:not(.hidden)) { min-height:720px; }
+.auth-game-mode .auth-layout.register-active .auth-card,
+.auth-game-mode .auth-layout:has(#register-form:not(.hidden)) .auth-card { left:0; }
 .auth-game-mode .auth-switch { margin-bottom:34px; padding:5px; border:1px solid #e0eaee; border-radius:13px; background:#edf5f7; }
 .auth-game-mode .auth-tab { min-height:48px; color:#60778a; border-radius:9px; font-size:13px; }
 .auth-game-mode .auth-tab.active { color:#0c7288; background:#fff; box-shadow:0 4px 15px #164e6314; }
@@ -750,26 +753,31 @@ body.auth-game-mode {
   .auth-game-mode .topbar { height:70px; padding:0 20px; }
   .auth-game-mode main { padding:26px 20px 38px; }
   .auth-game-mode .auth-layout,
-  .auth-game-mode .auth-layout.register-active { display:grid; min-height:auto; grid-template-columns:1fr; gap:0; overflow:hidden; border-radius:25px; }
+  .auth-game-mode .auth-layout.register-active,
+  .auth-game-mode .auth-layout:has(#register-form:not(.hidden)) { display:grid; min-height:auto; grid-template-columns:1fr; gap:0; overflow:hidden; border-radius:25px; }
   .auth-game-mode .auth-copy,
-  .auth-game-mode .auth-layout.register-active .auth-copy { position:relative; top:auto; left:auto; width:100%; height:auto; min-height:350px; padding:40px; border-radius:24px 24px 0 0; }
+  .auth-game-mode .auth-layout.register-active .auth-copy,
+  .auth-game-mode .auth-layout:has(#register-form:not(.hidden)) .auth-copy { position:relative; top:auto; left:auto; width:100%; height:auto; min-height:350px; padding:40px; border-radius:24px 24px 0 0; }
   .auth-game-mode .academy-title { font-size:clamp(44px,10vw,64px); }
   .auth-game-mode .auth-card,
-  .auth-game-mode .auth-layout.register-active .auth-card { position:relative; top:auto; left:auto; width:100%; max-width:none; height:auto; min-height:520px; padding:34px; overflow:visible; }
+  .auth-game-mode .auth-layout.register-active .auth-card,
+  .auth-game-mode .auth-layout:has(#register-form:not(.hidden)) .auth-card { position:relative; top:auto; left:auto; width:100%; max-width:none; height:auto; min-height:520px; padding:34px; overflow:visible; }
 }
 @media (max-width:620px) {
   .auth-game-mode .brand { font-size:16px; }
   .brand-mark { width:34px; height:34px; border-radius:10px; }
   .auth-game-mode main { padding:18px 12px 30px; }
   .auth-game-mode .auth-copy,
-  .auth-game-mode .auth-layout.register-active .auth-copy { min-height:310px; padding:30px 24px; border-radius:20px 20px 0 0; }
+  .auth-game-mode .auth-layout.register-active .auth-copy,
+  .auth-game-mode .auth-layout:has(#register-form:not(.hidden)) .auth-copy { min-height:310px; padding:30px 24px; border-radius:20px 20px 0 0; }
   .academy-kicker { margin-bottom:18px; }
   .auth-game-mode .academy-title { font-size:40px; }
   .auth-game-mode .academy-slogan { margin-top:20px; font-size:15px; }
   .academy-features { margin-top:24px; }
   .academy-features span { padding:8px 10px; font-size:10px; }
   .auth-game-mode .auth-card,
-  .auth-game-mode .auth-layout.register-active .auth-card { min-height:0; padding:23px 18px; border-radius:0; }
+  .auth-game-mode .auth-layout.register-active .auth-card,
+  .auth-game-mode .auth-layout:has(#register-form:not(.hidden)) .auth-card { min-height:0; padding:23px 18px; border-radius:0; }
   .auth-game-mode .auth-switch { margin-bottom:27px; }
   .auth-game-mode .auth-form h2 { font-size:27px; }
 }
