@@ -73,7 +73,7 @@ function show(id) {
   $$(".view").forEach(view => view.classList.toggle("active", view.id === id));
   document.body.classList.toggle("app-shell-mode", ["teacher-view","student-view"].includes(id));
   document.body.classList.toggle("exam-in-progress", id === "exam-view");
-  document.body.classList.toggle("student-game-mode", currentUser?.role === "student" && ["student-view","exam-view","result-view"].includes(id));
+  document.body.classList.remove("student-game-mode");
   document.body.classList.toggle("result-game-mode", id === "result-view");
   document.body.classList.toggle("auth-game-mode", id === "auth-view");
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -647,7 +647,7 @@ function renderTeacherCourses() {
 function renderTeacherExamCard(exam) {
   const course = findCourse(exam.courseId);
   const isDraft = !publishedExams.some(item => item.id === exam.id);
-  return `<article class="course-card ${isDraft ? "draft-card" : ""}"><div class="status ${exam.published ? "published" : ""}">${isDraft ? "Borrador local" : "Publicado"}</div><span class="eyebrow">${esc(course?.name || "Curso no encontrado")}</span><h3>${esc(exam.title)}</h3><p>Banco: ${quantity(exam.questions.length, "pregunta")} · Alumno: ${quantity(exam.questionsToShow, "pregunta")} · ${exam.minutes} minutos · ${quantity(exam.attemptsAllowed, "intento")} · ${exam.optionCount} opciones</p><div class="card-actions">${isDraft ? `<button class="btn secondary edit-exam" data-id="${esc(exam.id)}">Editar</button><button class="btn secondary export-draft" data-id="${esc(exam.id)}">Exportar JSON</button><button class="icon-btn delete delete-exam" data-id="${esc(exam.id)}">Eliminar</button>` : ""}</div></article>`;
+  return `<article class="course-card exam-management-card ${isDraft ? "draft-card" : ""}"><div class="status ${exam.published ? "published" : ""}">${isDraft ? "Borrador local" : "Publicado"}</div><span class="eyebrow">${esc(course?.name || "Curso no encontrado")}</span><h3>${esc(exam.title)}</h3><div class="exam-specs"><span><small>Banco</small><strong>${exam.questions.length}</strong><em>preguntas</em></span><span><small>Examen</small><strong>${exam.questionsToShow}</strong><em>preguntas</em></span><span><small>Tiempo</small><strong>${exam.minutes}</strong><em>minutos</em></span><span><small>Intentos</small><strong>${exam.attemptsAllowed}</strong><em>permitidos</em></span><span><small>Opciones</small><strong>${exam.optionCount}</strong><em>por pregunta</em></span></div><div class="card-actions">${isDraft ? `<button class="btn secondary edit-exam" data-id="${esc(exam.id)}">Editar</button><button class="btn secondary export-draft" data-id="${esc(exam.id)}">Exportar JSON</button><button class="icon-btn delete delete-exam" data-id="${esc(exam.id)}">Eliminar</button>` : ""}</div></article>`;
 }
 function bindTeacherActions() {
   $$("[data-overview-tab]").forEach(button => button.addEventListener("click", () => switchTab("teacher", button.dataset.overviewTab, $(`[data-teacher-tab="${button.dataset.overviewTab}"]`))));
@@ -814,7 +814,7 @@ function renderStudentExamRow(exam, myGrades) {
   const attempts = myGrades.filter(item => item.examId === exam.id);
   const best = attempts.length ? Math.max(...attempts.map(item => item.score)) : null;
   const reviewButton = attempts.length >= exam.attemptsAllowed && attempts.some(item => item.review?.length) ? `<button class="btn secondary review-exam" data-id="${esc(exam.id)}">Revisar intentos</button>` : "";
-  return `<div class="exam-row"><div><strong>${esc(exam.title)}</strong><small>${exam.questionsToShow} preguntas al azar de un banco de ${exam.questions.length} · ${exam.minutes} minutos · Intentos: ${attempts.length}/${exam.attemptsAllowed}</small></div><div class="attempt-actions">${best !== null ? `<span class="completed">Mejor nota: ${best}/20</span>` : ""}${attempts.length < exam.attemptsAllowed ? `<button class="btn primary start-exam" data-id="${esc(exam.id)}">${attempts.length ? "Intentar nuevamente" : "Rendir examen"}</button>` : `<span class="attempts-finished">Intentos completados</span>${reviewButton}`}</div></div>`;
+  return `<div class="exam-row"><div><strong>${esc(exam.title)}</strong><small>${quantity(exam.questionsToShow, "pregunta")} · ${exam.minutes} minutos · ${quantity(exam.attemptsAllowed, "intento permitido", "intentos permitidos")}</small></div><div class="attempt-actions">${best !== null ? `<span class="completed">Mejor nota: ${best}/20</span>` : ""}${attempts.length < exam.attemptsAllowed ? `<button class="btn primary start-exam" data-id="${esc(exam.id)}">${attempts.length ? "Intentar nuevamente" : "Rendir examen"}</button>` : `<span class="attempts-finished">Intentos completados</span>${reviewButton}`}</div></div>`;
 }
 
 async function startExam(id) {
