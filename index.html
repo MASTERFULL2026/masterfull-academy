@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Plataforma de cursos y exámenes para profesores y alumnos.">
   <title>Masterfull Academy | Cursos y exámenes</title>
-  <link rel="stylesheet" href="styles.css?v=20260716-1">
+  <link rel="stylesheet" href="styles.css?v=20260716-2">
 </head>
 <body class="session-loading">
   <header class="topbar">
@@ -70,21 +70,9 @@
 
     <section id="teacher-view" class="view teacher-lms">
       <div class="teacher-lms-shell">
-        <aside class="teacher-workspace-nav" aria-label="Navegación del espacio docente">
-          <div class="teacher-nav-heading"><span class="teacher-nav-mark">MA</span><div><strong>Espacio docente</strong><small>Gestión académica</small></div></div>
-          <nav class="teacher-nav-list" aria-label="Secciones del profesor">
-            <button class="teacher-nav-item active" data-teacher-tab="teacher-home" type="button"><span aria-hidden="true">⌂</span>Inicio</button>
-            <button class="teacher-nav-item" data-teacher-tab="teacher-courses" type="button"><span aria-hidden="true">▣</span>Cursos <b id="courses-tab-count">0</b></button>
-            <button class="teacher-nav-item" data-teacher-tab="teacher-exams" type="button"><span aria-hidden="true">✎</span>Evaluaciones <b id="exams-tab-count">0</b></button>
-            <button class="teacher-nav-item" data-teacher-tab="teacher-grades" type="button"><span aria-hidden="true">✓</span>Calificaciones <b id="grades-tab-count">0</b></button>
-          </nav>
-          <div class="teacher-nav-help"><strong>Flujo de contenido</strong><p>Crea en borrador, valida y publica. Los JSON continúan siendo portables y Supabase sincroniza lo publicado.</p></div>
-        </aside>
-
         <div class="teacher-workspace">
           <header class="teacher-page-head">
             <div><span class="eyebrow">MASTERFULL ACADEMY</span><h2 id="teacher-welcome">Hola, profesor</h2><p>Organiza tus cursos, evaluaciones y resultados desde un solo lugar.</p></div>
-            <div class="teacher-head-actions"><button class="btn secondary" id="new-exam-btn" type="button">+ Nueva evaluación</button><button class="btn primary" id="new-course-btn" type="button">+ Nuevo curso</button></div>
           </header>
 
           <div id="teacher-home" class="tab-content active">
@@ -93,12 +81,12 @@
           </div>
 
           <div id="teacher-courses" class="tab-content">
-            <div class="teacher-section-title"><div><span class="eyebrow">CONTENIDO</span><h3>Mis cursos</h3><p>Crea espacios de aprendizaje y conecta sus evaluaciones.</p></div><button class="btn primary overview-new-course" type="button">+ Crear curso</button></div>
+            <div class="teacher-section-title"><div><span class="eyebrow">CONTENIDO</span><h3>Mis cursos</h3><p>Crea espacios de aprendizaje y conecta sus evaluaciones.</p></div><button class="btn primary" id="new-course-btn" type="button">+ Crear curso</button></div>
             <div class="course-tools" role="search"><label class="sr-only" for="course-search">Buscar curso</label><input id="course-search" type="search" placeholder="Buscar por nombre, descripción o estado…"><p id="course-publish-status" class="course-publish-status" aria-live="polite"></p></div>
             <div id="teacher-course-list" class="card-grid" aria-live="polite"></div>
           </div>
           <div id="teacher-exams" class="tab-content">
-            <div class="teacher-section-title"><div><span class="eyebrow">EVALUACIONES</span><h3>Exámenes y bancos de preguntas</h3><p>Edita borradores, valida el formato y publica por curso.</p></div><button class="btn primary overview-new-exam" type="button">+ Crear evaluación</button></div>
+            <div class="teacher-section-title"><div><span class="eyebrow">EVALUACIONES</span><h3>Exámenes y bancos de preguntas</h3><p>Edita borradores, valida el formato y publica por curso.</p></div><button class="btn primary" id="new-exam-btn" type="button">+ Crear evaluación</button></div>
             <div id="teacher-exam-list" class="card-grid"></div>
           </div>
           <div id="teacher-grades" class="tab-content">
@@ -253,6 +241,6 @@
   <footer>Masterfull Academy · Plataforma educativa digital.</footer>
   <script src="config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="app.js?v=20260716-1"></script>
+  <script src="app.js?v=20260716-2"></script>
 </body>
 </html>
