@@ -653,16 +653,27 @@ body.auth-game-mode {
     linear-gradient(135deg,#f4fbfc 0%,#eaf5f8 48%,#eef4fb 100%);
 }
 .auth-game-mode .auth-layout {
+  position:relative;
+  display:block;
   width:min(1280px,100%);
-  min-height:620px;
+  min-height:650px;
   margin:0 auto;
-  grid-template-columns:minmax(0,1.12fr) minmax(390px,.72fr);
-  gap:clamp(36px,6vw,82px);
+  overflow:hidden;
+  border:1px solid #dce8ed;
+  border-radius:32px;
+  background:#fff;
+  box-shadow:0 28px 70px #164e6324,0 4px 14px #164e630d;
+  transition:min-height .42s ease;
 }
 .auth-game-mode .auth-copy {
-  position:relative;
+  position:absolute;
+  z-index:2;
+  top:0;
+  left:0;
   isolation:isolate;
-  min-height:550px;
+  width:54%;
+  height:100%;
+  min-height:0;
   padding:clamp(42px,5vw,68px);
   overflow:hidden;
   align-items:flex-start;
@@ -672,6 +683,7 @@ body.auth-game-mode {
   border-radius:32px;
   background:linear-gradient(138deg,#147d91 0%,#126a8f 48%,#2053a0 100%);
   box-shadow:0 28px 70px #155e7533;
+  transition:left .68s cubic-bezier(.68,-.08,.24,1.08),border-radius .35s ease;
 }
 .auth-game-mode .auth-copy::before,
 .auth-game-mode .auth-copy::after { content:""; position:absolute; z-index:-1; border-radius:50%; pointer-events:none; }
@@ -698,16 +710,28 @@ body.auth-game-mode {
 .academy-features span { display:flex; align-items:center; gap:8px; padding:9px 12px; color:#f2fbfd; border:1px solid #ffffff24; border-radius:10px; background:#ffffff0d; font-size:11px; font-weight:650; }
 .academy-features svg { width:17px; height:17px; fill:none; stroke:#86eff5; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
 .auth-game-mode .auth-card {
+  position:absolute;
+  z-index:1;
+  top:0;
+  left:54%;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
   width:100%;
-  max-width:500px;
-  justify-self:center;
-  padding:34px;
-  border:1px solid #dce8ed;
-  border-radius:25px;
-  background:#fffffffa;
-  box-shadow:0 28px 70px #164e6324,0 4px 14px #164e630d;
+  max-width:46%;
+  height:100%;
+  padding:34px clamp(28px,3vw,48px);
+  overflow-y:auto;
+  border:0;
+  border-radius:0;
+  background:#fff;
+  box-shadow:none;
   animation:none;
+  transition:left .68s cubic-bezier(.68,-.08,.24,1.08);
 }
+.auth-game-mode .auth-layout.register-active .auth-copy { left:46%; }
+.auth-game-mode .auth-layout.register-active { min-height:720px; }
+.auth-game-mode .auth-layout.register-active .auth-card { left:0; }
 .auth-game-mode .auth-switch { margin-bottom:34px; padding:5px; border:1px solid #e0eaee; border-radius:13px; background:#edf5f7; }
 .auth-game-mode .auth-tab { min-height:48px; color:#60778a; border-radius:9px; font-size:13px; }
 .auth-game-mode .auth-tab.active { color:#0c7288; background:#fff; box-shadow:0 4px 15px #164e6314; }
@@ -725,24 +749,35 @@ body.auth-game-mode {
 @media (max-width:900px) {
   .auth-game-mode .topbar { height:70px; padding:0 20px; }
   .auth-game-mode main { padding:26px 20px 38px; }
-  .auth-game-mode .auth-layout { min-height:auto; grid-template-columns:1fr; gap:24px; }
-  .auth-game-mode .auth-copy { min-height:350px; padding:40px; border-radius:25px; }
+  .auth-game-mode .auth-layout,
+  .auth-game-mode .auth-layout.register-active { display:grid; min-height:auto; grid-template-columns:1fr; gap:0; overflow:hidden; border-radius:25px; }
+  .auth-game-mode .auth-copy,
+  .auth-game-mode .auth-layout.register-active .auth-copy { position:relative; top:auto; left:auto; width:100%; height:auto; min-height:350px; padding:40px; border-radius:24px 24px 0 0; }
   .auth-game-mode .academy-title { font-size:clamp(44px,10vw,64px); }
-  .auth-game-mode .auth-card { max-width:680px; }
+  .auth-game-mode .auth-card,
+  .auth-game-mode .auth-layout.register-active .auth-card { position:relative; top:auto; left:auto; width:100%; max-width:none; height:auto; min-height:520px; padding:34px; overflow:visible; }
 }
 @media (max-width:620px) {
   .auth-game-mode .brand { font-size:16px; }
   .brand-mark { width:34px; height:34px; border-radius:10px; }
   .auth-game-mode main { padding:18px 12px 30px; }
-  .auth-game-mode .auth-copy { min-height:310px; padding:30px 24px; border-radius:21px; }
+  .auth-game-mode .auth-copy,
+  .auth-game-mode .auth-layout.register-active .auth-copy { min-height:310px; padding:30px 24px; border-radius:20px 20px 0 0; }
   .academy-kicker { margin-bottom:18px; }
   .auth-game-mode .academy-title { font-size:40px; }
   .auth-game-mode .academy-slogan { margin-top:20px; font-size:15px; }
   .academy-features { margin-top:24px; }
   .academy-features span { padding:8px 10px; font-size:10px; }
-  .auth-game-mode .auth-card { padding:23px 18px; border-radius:20px; }
+  .auth-game-mode .auth-card,
+  .auth-game-mode .auth-layout.register-active .auth-card { min-height:0; padding:23px 18px; border-radius:0; }
   .auth-game-mode .auth-switch { margin-bottom:27px; }
   .auth-game-mode .auth-form h2 { font-size:27px; }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  .auth-game-mode .auth-layout,
+  .auth-game-mode .auth-copy,
+  .auth-game-mode .auth-card { transition:none; }
 }
 
 /* Espacio docente tipo LMS */

@@ -414,9 +414,13 @@ function bindStaticEvents() {
     if (currentUser) renderApp();
   });
   $$(".auth-tab").forEach(button => button.addEventListener("click", () => {
+    const authLayout = $("#auth-view .auth-layout");
+    const isRegister = button.dataset.auth === "register";
     $$(".auth-tab").forEach(tab => tab.classList.toggle("active", tab === button));
-    $("#login-form").classList.toggle("hidden", button.dataset.auth !== "login");
-    $("#register-form").classList.toggle("hidden", button.dataset.auth !== "register");
+    authLayout.dataset.authMode = isRegister ? "register" : "login";
+    authLayout.classList.toggle("register-active", isRegister);
+    $("#login-form").classList.toggle("hidden", isRegister);
+    $("#register-form").classList.toggle("hidden", !isRegister);
   }));
   bindPasswordToggles();
   $("#register-form").addEventListener("submit", registerUser);
