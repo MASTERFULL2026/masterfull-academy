@@ -1521,6 +1521,55 @@ body,.app-shell-mode main { background: #f4f7fa; }
 .app-shell-mode #student-view .start-exam { color: #fff; border: 0; background: #0f8fa8; box-shadow: none; }
 .app-shell-mode #student-view .completed { color: #177259; border: 0; background: #e8f6f1; font-weight: 550; }
 .app-shell-mode #student-view .attempts-finished { font-weight: 500; }
+.app-shell-mode #student-view .review-exam {
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 8px;
+  color: #176b7c;
+  background: #edf6f8;
+  box-shadow: none;
+  font-size: 11.5px;
+  font-weight: 500;
+}
+.app-shell-mode #student-view .review-exam:hover { color: #0e5968; background: #e2f1f4; transform: none; }
+
+/* Barra superior ligera para vistas fuera del panel lateral */
+body:not(.app-shell-mode) .topbar {
+  height: 72px;
+  padding: 0 max(3.5vw,24px);
+  border-bottom-color: #e3e9ef;
+  background: #fff;
+  box-shadow: 0 3px 14px #1f314507;
+  backdrop-filter: none;
+}
+body:not(.app-shell-mode) .topbar .brand { gap: 10px; color: #26384b; font-size: 16px; font-weight: 600; letter-spacing: -.015em; }
+body:not(.app-shell-mode) .topbar .brand-mark { width: 38px; height: 38px; border-radius: 10px; box-shadow: 0 6px 15px #0f8fa821; }
+body:not(.app-shell-mode) .topbar .user-menu { gap: 9px; }
+body:not(.app-shell-mode) .topbar .user-avatar { width: 38px; height: 38px; color: #167087; background: #e8f4f7; font-size: 13px; font-weight: 600; }
+body:not(.app-shell-mode) .topbar .user-identity strong { color: #2d4053; font-size: 13px; font-weight: 550; line-height: 1.2; }
+body:not(.app-shell-mode) .topbar .user-identity small { margin-top: 1px; color: #788799; font-size: 10px; font-weight: 400; line-height: 1.25; }
+body:not(.app-shell-mode) .topbar .user-actions { display: flex; align-items: center; gap: 7px; margin-left: 8px; }
+body:not(.app-shell-mode) .topbar .user-menu .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  min-height: 36px;
+  margin: 0;
+  padding: 7px 10px;
+  border-color: #dfe6ed;
+  border-radius: 9px;
+  color: #43566a;
+  background: #fff;
+  box-shadow: none;
+  font-size: 12px;
+  font-weight: 500;
+}
+body:not(.app-shell-mode) .topbar .user-menu .btn:hover { color: #176b7c; border-color: #c9dce2; background: #f6fafb; transform: none; }
+body:not(.app-shell-mode) .topbar .user-menu .logout-btn { color: #8f4a52; }
+body:not(.app-shell-mode) .topbar .menu-icon { width: 16px; height: 16px; }
+body:not(.app-shell-mode) .topbar .sound-btn { min-width: 0; }
 
 @media (max-width:760px) {
   .app-shell-mode #student-view .dashboard-head { padding: 23px 21px; }
@@ -1536,4 +1585,14 @@ body,.app-shell-mode main { background: #f4f7fa; }
   .editor-settings-section .form-grid { grid-template-columns: 1fr; }
   .editor-settings-section .form-grid .field-span-2 { grid-column: auto; }
   .exam-editor-card .question-mode-tabs { grid-template-columns: 1fr; }
+}
+@media (max-width:780px) {
+  body:not(.app-shell-mode) .topbar { height: 62px; align-items: center; padding: 9px 13px; }
+  body:not(.app-shell-mode) .topbar .brand { font-size: 14px; }
+  body:not(.app-shell-mode) .topbar .brand-mark { width: 34px; height: 34px; }
+  body:not(.app-shell-mode) .topbar .user-identity { display: none; }
+  body:not(.app-shell-mode) .topbar .user-menu { gap: 5px; }
+  body:not(.app-shell-mode) .topbar .user-actions { gap: 5px; margin-left: 0; }
+  body:not(.app-shell-mode) .topbar .user-menu .btn { width: 34px; min-width: 34px; min-height: 34px; padding: 7px; justify-content: center; font-size: 0; }
+  body:not(.app-shell-mode) .topbar .user-menu .btn span { display: none; }
 }
