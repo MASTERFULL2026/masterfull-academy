@@ -1500,6 +1500,12 @@ body,.app-shell-mode main { background: #f4f7fa; }
 .app-shell-mode #session-area { flex: 1 1 auto; overflow: hidden; }
 .app-shell-mode .shell-teacher-nav { min-height: 0; flex: 1 1 auto; align-content: start; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #ffffff24 transparent; }
 .app-shell-mode .user-menu { flex: 0 0 auto; margin-top: 0; background: #243447; }
+.teacher-shell-mode .sound-btn,
+body.app-shell-mode:has(.shell-teacher-nav) .sound-btn { display: none !important; }
+.teacher-shell-mode .user-actions,
+body.app-shell-mode:has(.shell-teacher-nav) .user-actions { gap: 4px; }
+.teacher-shell-mode .user-actions .logout-btn,
+body.app-shell-mode:has(.shell-teacher-nav) .user-actions .logout-btn { display: flex; visibility: visible; margin-top: 2px !important; }
 
 @media (min-width:901px) and (max-height:720px) {
   .app-shell-mode .topbar { padding: 15px; }

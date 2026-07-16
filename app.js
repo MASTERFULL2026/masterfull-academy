@@ -385,26 +385,28 @@ function normalizeAnswer(answer, options, index, zeroBasedNumber = false) {
 
 function renderApp() {
   document.body.classList.remove("session-loading");
+  const isTeacher = currentUser?.role === "teacher";
+  document.body.classList.toggle("teacher-shell-mode", isTeacher);
   if (!currentUser) {
     $("#session-area").innerHTML = "";
     show("auth-view");
     return;
   }
   const activeTeacherTab = $("#teacher-view .tab-content.active")?.id || "teacher-home";
-  const teacherNavigation = currentUser.role === "teacher" ? `<nav class="shell-teacher-nav" aria-label="Secciones del profesor">
+  const teacherNavigation = isTeacher ? `<nav class="shell-teacher-nav" aria-label="Secciones del profesor">
     <div class="shell-nav-label"><strong>Espacio docente</strong><small>Gestión académica</small></div>
     <button class="shell-nav-item ${activeTeacherTab === "teacher-home" ? "active" : ""}" data-teacher-tab="teacher-home" type="button"><span aria-hidden="true">⌂</span>Inicio</button>
     <button class="shell-nav-item ${activeTeacherTab === "teacher-courses" ? "active" : ""}" data-teacher-tab="teacher-courses" type="button"><span aria-hidden="true">▣</span>Cursos <b id="courses-tab-count">0</b></button>
     <button class="shell-nav-item ${activeTeacherTab === "teacher-exams" ? "active" : ""}" data-teacher-tab="teacher-exams" type="button"><span aria-hidden="true">✎</span>Evaluaciones <b id="exams-tab-count">0</b></button>
     <button class="shell-nav-item ${activeTeacherTab === "teacher-grades" ? "active" : ""}" data-teacher-tab="teacher-grades" type="button"><span aria-hidden="true">✓</span>Calificaciones <b id="grades-tab-count">0</b></button>
   </nav>` : "";
-  const soundControl = currentUser.role === "teacher" ? "" : `<button id="sound-btn" class="btn ghost sound-btn" aria-pressed="${soundEnabled}" title="${soundEnabled ? "Silenciar sonidos" : "Activar sonidos"}">${menuIcon(soundEnabled ? "sound" : "muted")}<span>${soundEnabled ? "Sonido activado" : "Sonido silenciado"}</span></button>`;
-  $("#session-area").innerHTML = `${teacherNavigation}<div class="user-menu"><span class="user-avatar">${esc(currentUser.name.charAt(0).toUpperCase())}</span><span class="user-identity"><strong>${esc(currentUser.name)}</strong><small>${currentUser.role === "teacher" ? "Profesor" : "Alumno"}</small><small class="user-email">${esc(currentUser.email || "")}</small></span><div class="user-actions">${soundControl}<button id="profile-btn" class="btn ghost">${menuIcon("profile")}<span>Mi perfil</span></button><button id="logout-btn" class="btn ghost logout-btn">${menuIcon("logout")}<span>Cerrar sesión</span></button></div></div>`;
+  const soundControl = isTeacher ? "" : `<button id="sound-btn" class="btn ghost sound-btn" aria-pressed="${soundEnabled}" title="${soundEnabled ? "Silenciar sonidos" : "Activar sonidos"}">${menuIcon(soundEnabled ? "sound" : "muted")}<span>${soundEnabled ? "Sonido activado" : "Sonido silenciado"}</span></button>`;
+  $("#session-area").innerHTML = `${teacherNavigation}<div class="user-menu"><span class="user-avatar">${esc(currentUser.name.charAt(0).toUpperCase())}</span><span class="user-identity"><strong>${esc(currentUser.name)}</strong><small>${isTeacher ? "Profesor" : "Alumno"}</small><small class="user-email">${esc(currentUser.email || "")}</small></span><div class="user-actions">${soundControl}<button id="profile-btn" class="btn ghost">${menuIcon("profile")}<span>Mi perfil</span></button><button id="logout-btn" class="btn ghost logout-btn">${menuIcon("logout")}<span>Cerrar sesión</span></button></div></div>`;
   $("#sound-btn")?.addEventListener("click", toggleSound);
   $("#profile-btn").addEventListener("click", openProfile);
   $("#logout-btn").addEventListener("click", logout);
   $$("#session-area [data-teacher-tab]").forEach(button => button.addEventListener("click", () => switchTab("teacher", button.dataset.teacherTab, button)));
-  if (currentUser.role === "teacher") renderTeacher(); else renderStudent();
+  if (isTeacher) renderTeacher(); else renderStudent();
 }
 
 function bindStaticEvents() {
