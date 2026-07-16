@@ -834,8 +834,8 @@ async function startExam(id) {
   finishingExam = false;
   $("#exam-course-name").textContent = activeCourse?.name || "CURSO";
   $("#exam-title").textContent = activeExam.title;
-  $("#questions-container").innerHTML = activeQuestions.map((question, index) => `<article class="question-card"><span class="question-number">PREGUNTA ${index + 1} DE ${activeQuestions.length}</span><h3>${esc(question.text)}</h3>${questionImageMarkup(question)}${question.options.map((option, i) => `<label class="option"><input type="radio" name="q-${esc(question.id)}" value="${i}"><span>${esc(option)}</span></label>`).join("")}</article>`).join("");
-  $("#take-exam-form").querySelectorAll('input[type="radio"]').forEach(input => input.addEventListener("change", () => { updateExamProgress(); saveActiveAttempt(); }));
+  $("#questions-container").innerHTML = activeQuestions.map((question, index) => `<article class="question-card" data-question-id="${esc(question.id)}"><div class="question-card-head"><span class="question-number">Pregunta ${index + 1} <small>de ${activeQuestions.length}</small></span><span class="question-status">Pendiente</span></div><h3>${esc(question.text)}</h3>${questionImageMarkup(question)}<div class="options-list">${question.options.map((option, i) => `<label class="option"><input type="radio" name="q-${esc(question.id)}" value="${i}"><span class="option-letter" aria-hidden="true">${"ABCDEFGH"[i] || i + 1}</span><span class="option-copy">${esc(option)}</span><span class="option-check" aria-hidden="true">✓</span></label>`).join("")}</div></article>`).join("");
+  $("#take-exam-form").querySelectorAll('input[type="radio"]').forEach(input => input.addEventListener("change", () => { updateQuestionCardState(input); updateExamProgress(); saveActiveAttempt(); }));
   updateTimer();
   updateExamProgress();
   saveActiveAttempt();
@@ -869,6 +869,18 @@ function getCurrentAnswers() {
 function updateExamProgress() {
   const answered = Object.values(getCurrentAnswers()).filter(value => value !== null).length;
   $("#exam-progress").textContent = `${answered} de ${activeQuestions.length} respondidas`;
+  const percentage = activeQuestions.length ? (answered / activeQuestions.length) * 100 : 0;
+  $("#exam-progress-bar").style.width = `${percentage}%`;
+  $("#exam-progress-track").setAttribute("aria-valuemax", String(activeQuestions.length));
+  $("#exam-progress-track").setAttribute("aria-valuenow", String(answered));
+  $("#exam-progress-track").classList.toggle("complete", answered === activeQuestions.length && activeQuestions.length > 0);
+}
+function updateQuestionCardState(input) {
+  const card = input.closest(".question-card");
+  if (!card) return;
+  card.classList.add("answered");
+  const status = card.querySelector(".question-status");
+  if (status) status.textContent = "Respondida ✓";
 }
 function saveActiveAttempt() {
   if (!activeExam || finishingExam || !currentUser) return;
