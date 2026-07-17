@@ -1713,6 +1713,80 @@ body.app-shell-mode:has(.shell-teacher-nav) .user-actions .logout-btn { display:
   line-height: 1.2;
 }
 
+/* Evaluaciones agrupadas como módulos de curso */
+.exam-module-list { display: grid; gap: 18px; }
+.exam-module-list > .empty { padding: 48px 24px; border-radius: 14px; background: #fff; box-shadow: 0 8px 24px #1f31450a; }
+.exam-course-module { overflow: hidden; border: 1px solid #dfe6ec; border-radius: 12px; background: #fff; box-shadow: 0 8px 24px #1f31450a; }
+.exam-course-module[open] { box-shadow: 0 12px 30px #1f31450f; }
+.exam-module-summary { display: grid; grid-template-columns: 18px 40px minmax(0,1fr) auto auto; align-items: center; gap: 13px; min-height: 82px; padding: 15px 18px; color: #26384b; background: #f7f9fb; cursor: pointer; list-style: none; transition: background .16s ease; }
+.exam-module-summary::-webkit-details-marker { display: none; }
+.exam-module-summary:hover { background: #f2f6f8; }
+.exam-module-chevron { width: 9px; height: 9px; border-right: 2px solid #6f7f90; border-bottom: 2px solid #6f7f90; transform: rotate(-45deg); transition: transform .18s ease; }
+.exam-course-module[open] .exam-module-chevron { transform: rotate(45deg) translate(-2px,-2px); }
+.exam-module-course-icon,.exam-module-type-icon { display: grid; place-items: center; color: #0f8fa8; background: #e7f7fa; }
+.exam-module-course-icon { width: 40px; height: 40px; border-radius: 10px; }
+.exam-module-course-icon .modern-icon { width: 21px; height: 21px; }
+.exam-module-heading { display: block; min-width: 0; }
+.exam-module-heading small,.exam-module-heading strong,.exam-module-heading > span { display: block; }
+.exam-module-heading small { margin-bottom: 3px; color: #8391a0; font-size: 9px; font-weight: 650; letter-spacing: .08em; }
+.exam-module-heading strong { overflow: hidden; color: #26384b; font-size: 16px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.exam-module-heading > span { margin-top: 3px; overflow: hidden; color: #7b8998; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.exam-module-count { color: #65758a; font-size: 11px; font-weight: 550; white-space: nowrap; }
+.exam-module-summary > .status { margin: 0; padding: 5px 9px; font-size: 9.5px; white-space: nowrap; }
+.exam-module-body { border-top: 1px solid #e4e9ee; }
+.exam-module-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 52px; padding: 9px 17px 9px 50px; color: #7a8897; background: #fff; font-size: 10.5px; }
+.exam-module-toolbar .btn { min-height: 32px; padding: 6px 11px; border-radius: 8px; font-size: 11px; }
+.exam-module-items { border-top: 1px solid #edf0f3; }
+.exam-module-item { display: grid; grid-template-columns: 19px 38px minmax(0,1fr) auto; align-items: center; gap: 13px; min-height: 86px; padding: 13px 17px; border-bottom: 1px solid #edf0f3; background: #fff; transition: background .15s ease; }
+.exam-module-item:last-child { border-bottom: 0; }
+.exam-module-item:hover { background: #fbfdfe; }
+.exam-module-item.is-draft { background: #fffdfa; }
+.exam-module-item.is-draft:hover { background: #fffaf3; }
+.exam-module-drag { color: #a4aeba; font-size: 13px; letter-spacing: -3px; user-select: none; }
+.exam-module-type-icon { width: 38px; height: 38px; border-radius: 50%; }
+.exam-module-item.is-draft .exam-module-type-icon { color: #9a6724; background: #fff1d9; }
+.exam-module-type-icon .modern-icon { width: 19px; height: 19px; }
+.exam-module-item-main { min-width: 0; }
+.exam-module-title-line { display: flex; align-items: center; gap: 9px; }
+.exam-module-title-line h4 { min-width: 0; margin: 0; overflow: hidden; color: #2a3d50; font-size: 14px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.exam-module-title-line .status { flex: 0 0 auto; margin: 0; padding: 3px 7px; font-size: 9px; }
+.exam-module-meta { display: flex; flex-wrap: wrap; gap: 5px 0; margin-top: 8px; color: #7c8997; font-size: 10.5px; }
+.exam-module-meta span { padding: 0 10px; border-left: 1px solid #e4e9ee; }
+.exam-module-meta span:first-child { padding-left: 0; border-left: 0; }
+.exam-module-meta strong { color: #596b7c; font-weight: 600; }
+.exam-module-actions { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
+.exam-module-actions .btn,.exam-module-actions .icon-btn { flex: 0 0 auto; min-height: 30px; padding: 5px 9px; border-radius: 8px; font-size: 10.5px; font-weight: 500; }
+.exam-module-empty { display: flex; align-items: center; gap: 14px; min-height: 95px; padding: 18px 24px 18px 50px; color: #7d8b99; }
+.exam-module-empty > span { display: grid; width: 38px; height: 38px; place-items: center; color: #8a9baa; border-radius: 50%; background: #f0f3f6; }
+.exam-module-empty .modern-icon { width: 18px; height: 18px; }
+.exam-module-empty strong { color: #526578; font-size: 12.5px; font-weight: 600; }
+.exam-module-empty p { margin: 4px 0 0; font-size: 11px; }
+
+@media (max-width:760px) {
+  .exam-module-summary { grid-template-columns: 16px 36px minmax(0,1fr) auto; min-height: 74px; padding: 13px; gap: 10px; }
+  .exam-module-summary > .status { display: none; }
+  .exam-module-course-icon { width: 36px; height: 36px; }
+  .exam-module-heading > span { display: none; }
+  .exam-module-count { font-size: 10px; }
+  .exam-module-toolbar { padding-left: 13px; }
+  .exam-module-item { grid-template-columns: 34px minmax(0,1fr); padding: 14px 13px; }
+  .exam-module-drag { display: none; }
+  .exam-module-type-icon { width: 34px; height: 34px; }
+  .exam-module-actions { grid-column: 2; justify-content: flex-start; }
+  .exam-module-meta span { padding: 0 7px; }
+  .exam-module-empty { padding-left: 18px; }
+}
+
+@media (max-width:460px) {
+  .exam-module-summary { grid-template-columns: 14px 34px minmax(0,1fr); }
+  .exam-module-count { display: none; }
+  .exam-module-toolbar { align-items: stretch; flex-direction: column; gap: 7px; }
+  .exam-module-toolbar .btn { width: 100%; }
+  .exam-module-title-line { align-items: flex-start; flex-direction: column; gap: 5px; }
+  .exam-module-title-line h4 { white-space: normal; }
+  .exam-module-actions { flex-wrap: wrap; }
+}
+
 /* Acciones discretas en la tabla de notas del alumno */
 .app-shell-mode #student-grades .table-wrap { border-radius: 14px; }
 .app-shell-mode #student-grades th {

@@ -600,6 +600,7 @@ function rowToGrade(row) {
 function renderTeacher() {
   show("teacher-view");
   $("#teacher-welcome").textContent = `Hola, ${currentUser.name}`;
+  const courses = [...new Map([...publishedCourses, ...drafts.courses].map(course => [course.id, course])).values()];
   const exams = [...publishedExams, ...drafts.exams];
   $("#teacher-stats").innerHTML =
     stat("Cursos publicados", publishedCourses.length, "courses", "published") +
@@ -609,7 +610,9 @@ function renderTeacher() {
   $("#grades-tab-count").textContent = results.length;
   renderTeacherOverview();
   renderTeacherCourseList(false);
-  $("#teacher-exam-list").innerHTML = exams.length ? exams.map(renderTeacherExamCard).join("") : emptyCard("Todavía no hay exámenes publicados ni borradores locales.");
+  $("#teacher-exam-list").innerHTML = courses.length || exams.length
+    ? renderTeacherExamModules(courses, exams)
+    : emptyCard("Todavía no hay cursos ni evaluaciones.");
   fillTeacherFilters();
   renderTeacherGrades(filteredTeacherResults());
   bindTeacherActions();
@@ -660,13 +663,47 @@ function renderTeacherCourses() {
   }).filter(Boolean);
   return published.concat(local).join("") || emptyCard("No se encontraron cursos.");
 }
-function renderTeacherExamCard(exam) {
-  const course = findCourse(exam.courseId);
+function renderTeacherExamModules(courses, exams) {
+  const coursesById = new Map(courses.map(course => [course.id, course]));
+  exams.forEach(exam => {
+    if (!coursesById.has(exam.courseId)) coursesById.set(exam.courseId, { id: exam.courseId, name: "Curso no encontrado", description: "Revisa la asignación de estas evaluaciones." });
+  });
+  return [...coursesById.values()].map(course => {
+    const courseExams = exams.filter(exam => exam.courseId === course.id);
+    const isDraftCourse = drafts.courses.some(item => item.id === course.id);
+    const publishedCount = courseExams.filter(exam => publishedExams.some(item => item.id === exam.id)).length;
+    const rows = courseExams.length
+      ? courseExams.map(renderTeacherExamRow).join("")
+      : `<div class="exam-module-empty"><span>${modernIcon("exams")}</span><div><strong>Este curso aún no tiene evaluaciones</strong><p>Agrega el primer examen para comenzar a construir el módulo.</p></div></div>`;
+    return `<details class="exam-course-module" open>
+      <summary class="exam-module-summary">
+        <span class="exam-module-chevron" aria-hidden="true"></span>
+        <span class="exam-module-course-icon">${modernIcon("course")}</span>
+        <span class="exam-module-heading"><small>MÓDULO DEL CURSO</small><strong>${esc(course.name)}</strong><span>${esc(course.description || "Sin descripción registrada")}</span></span>
+        <span class="exam-module-count">${quantity(courseExams.length, "evaluación", "evaluaciones")}</span>
+        <span class="status ${isDraftCourse ? "draft" : "published"}">${isDraftCourse ? "Curso local" : "Publicado"}</span>
+      </summary>
+      <div class="exam-module-body">
+        <div class="exam-module-toolbar"><span>${publishedCount ? `${quantity(publishedCount, "examen publicado", "exámenes publicados")}` : "Contenido del curso"}</span><button class="btn secondary create-exam-course" data-id="${esc(course.id)}" type="button">+ Agregar evaluación</button></div>
+        <div class="exam-module-items">${rows}</div>
+      </div>
+    </details>`;
+  }).join("");
+}
+function renderTeacherExamRow(exam) {
   const isDraft = !publishedExams.some(item => item.id === exam.id);
   const actions = isDraft
     ? `<button class="btn secondary edit-exam" data-id="${esc(exam.id)}" type="button">Editar</button><button class="btn secondary export-draft" data-id="${esc(exam.id)}" type="button">Exportar JSON</button><button class="icon-btn delete delete-exam" data-id="${esc(exam.id)}" type="button">Eliminar</button>`
     : `<button class="btn secondary edit-exam" data-id="${esc(exam.id)}" type="button">Modificar</button>`;
-  return `<article class="course-card exam-management-card ${isDraft ? "draft-card" : ""}"><div class="exam-card-header"><span class="exam-course-name">${esc(course?.name || "Curso no encontrado")}</span><span class="status ${exam.published ? "published" : ""}">${isDraft ? "Borrador local" : "Publicado"}</span></div><h3>${esc(exam.title)}</h3><div class="exam-core-stats"><span><small>Preguntas</small><strong>${exam.questionsToShow}</strong></span><span><small>Duración</small><strong>${exam.minutes} min</strong></span><span><small>Intentos</small><strong>${exam.attemptsAllowed}</strong></span></div><div class="exam-detail-row"><span>Banco: <strong>${quantity(exam.questions.length, "pregunta")}</strong></span><span><strong>${exam.optionCount}</strong> opciones por pregunta</span></div><div class="card-actions exam-card-actions">${actions}</div></article>`;
+  return `<article class="exam-module-item ${isDraft ? "is-draft" : ""}">
+    <span class="exam-module-drag" aria-hidden="true">⋮⋮</span>
+    <span class="exam-module-type-icon">${modernIcon("exams")}</span>
+    <div class="exam-module-item-main">
+      <div class="exam-module-title-line"><h4>${esc(exam.title)}</h4><span class="status ${isDraft ? "draft" : "published"}">${isDraft ? "Borrador local" : "Publicado"}</span></div>
+      <div class="exam-module-meta"><span><strong>${exam.questionsToShow}</strong> preguntas</span><span><strong>${exam.minutes}</strong> min</span><span><strong>${exam.attemptsAllowed}</strong> ${exam.attemptsAllowed === 1 ? "intento" : "intentos"}</span><span>Banco: <strong>${quantity(exam.questions.length, "pregunta")}</strong></span><span><strong>${exam.optionCount}</strong> opciones</span></div>
+    </div>
+    <div class="exam-module-actions">${actions}</div>
+  </article>`;
 }
 function bindTeacherActions() {
   $$("[data-overview-tab]").forEach(button => button.addEventListener("click", () => switchTab("teacher", button.dataset.overviewTab, $(`[data-teacher-tab="${button.dataset.overviewTab}"]`))));
