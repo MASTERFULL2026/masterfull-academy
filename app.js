@@ -31,6 +31,7 @@ let builderQuestions = [];
 let builderOptionCount = 5;
 let soundEnabled = localStorage.getItem(SOUND_KEY) !== "false";
 let audioContext = null;
+let authTransitionPending = false;
 let minuteWarningPlayed = false;
 let appReady = false;
 
@@ -144,8 +145,9 @@ async function initApp() {
     renderApp();
     return;
   }
-  sb.auth.onAuthStateChange(async (_event, session) => {
+  sb.auth.onAuthStateChange(async (event, session) => {
     if (!appReady) return;
+    if (authTransitionPending && event === "SIGNED_IN") return;
     await setSessionFromSupabase(session, false);
     if (currentUser) await loadCourseChanges();
     renderApp();
@@ -388,6 +390,7 @@ function renderApp() {
   const isTeacher = currentUser?.role === "teacher";
   document.body.classList.toggle("teacher-shell-mode", isTeacher);
   if (!currentUser) {
+    $("#auth-view .auth-layout")?.classList.remove("auth-login-exit");
     $("#session-area").innerHTML = "";
     show("auth-view");
     return;
@@ -513,6 +516,7 @@ async function loginUser(event) {
   const button = event.submitter;
   button.disabled = true;
   $("#login-error").textContent = "Ingresando...";
+  authTransitionPending = true;
   try {
     const { data, error } = await sb.auth.signInWithPassword({
       email: $("#login-email").value.trim().toLowerCase(),
@@ -520,15 +524,20 @@ async function loginUser(event) {
     });
     if (error) throw error;
     $("#login-error").textContent = "";
-    await setSessionFromSupabase(data.session);
-    await syncPendingResults();
+    await setSessionFromSupabase(data.session, false);
+    if (!currentUser) throw new Error("No se pudo cargar el perfil de esta cuenta.");
+    const exitAnimation = playAuthLoginExit();
+    await syncPendingResults(false);
     await refreshResults();
     recoverInterruptedAttempt();
+    await exitAnimation;
     renderApp();
   } catch (error) {
     console.error("Login:", error);
+    $("#auth-view .auth-layout")?.classList.remove("auth-login-exit");
     $("#login-error").textContent = translateError(error);
   } finally {
+    authTransitionPending = false;
     button.disabled = false;
   }
 }
@@ -739,6 +748,26 @@ async function publishSelectedCourseExams(event) {
   } finally {
     button.disabled = false;
   }
+}
+
+function playAuthLoginExit() {
+  const layout = $("#auth-view .auth-layout");
+  if (!layout || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return Promise.resolve();
+  layout.classList.add("auth-login-exit");
+  return new Promise(resolve => {
+    let completed = false;
+    const finish = () => {
+      if (completed) return;
+      completed = true;
+      layout.removeEventListener("transitionend", onTransitionEnd);
+      resolve();
+    };
+    const onTransitionEnd = event => {
+      if (event.propertyName === "left" && event.target.classList.contains("auth-card")) finish();
+    };
+    layout.addEventListener("transitionend", onTransitionEnd);
+    window.setTimeout(finish, 860);
+  });
 }
 function fillTeacherFilters() {
   $("#teacher-course-filter").innerHTML = `<option value="">Todos los cursos</option>${publishedCourses.map(course => `<option value="${esc(course.id)}">${esc(course.name)}</option>`).join("")}`;
@@ -981,14 +1010,14 @@ async function syncOneResult(payload) {
     return false;
   }
 }
-async function syncPendingResults() {
+async function syncPendingResults(shouldRender = true) {
   if (!sb || !currentUser || !pendingResults.length || !navigator.onLine) return;
   for (const payload of [...pendingResults]) {
     const ok = await syncOneResult(payload);
     if (ok) removePending(payload.submission_id);
   }
   await refreshResults();
-  if (currentUser) renderApp();
+  if (currentUser && shouldRender) renderApp();
 }
 async function sendResultKeepalive(payload) {
   try {

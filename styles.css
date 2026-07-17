@@ -823,6 +823,14 @@ body.auth-game-mode {
 .planet-violet { width:280px; height:280px; top:-80px; right:3%; background:radial-gradient(circle at 38% 38%,#99f6e46b 0,#0ea5e93b 24%,#0f766e1d 49%,transparent 72%); filter:blur(3px); box-shadow:0 0 95px #06b6d42d; animation:nebula-breathe 9s ease-in-out infinite; }
 .planet-cyan { width:13px; height:13px; left:7%; bottom:14%; background:#ecfeff; box-shadow:0 0 12px #fff,0 0 28px #22d3ee,0 0 70px #14b8a6; animation:comet-flight 8.5s -2s ease-in-out infinite; }
 .planet-cyan::after { content:""; position:absolute; top:5px; right:8px; width:150px; height:2px; border-radius:999px; background:linear-gradient(90deg,transparent,#67e8f9a8); transform-origin:right center; transform:rotate(-18deg); }
+.cosmos-comet { position:absolute; z-index:1; width:7px; height:7px; opacity:0; border-radius:50%; background:#ecfeff; box-shadow:0 0 10px #fff,0 0 24px #22d3ee,0 0 48px #14b8a6; transform-style:preserve-3d; }
+.cosmos-comet::after { content:""; position:absolute; top:3px; right:5px; width:clamp(90px,12vw,180px); height:1.5px; border-radius:999px; background:linear-gradient(90deg,transparent,#67e8f9c4); transform-origin:right center; }
+.comet-one { left:-12%; top:9%; animation:comet-diagonal-down 10s -1s linear infinite; }
+.comet-two { left:-16%; top:43%; width:5px; height:5px; animation:comet-diagonal-up 13s -7s linear infinite; }
+.comet-two::after { width:110px; background:linear-gradient(90deg,transparent,#a7f3d0b8); }
+.comet-three { left:18%; top:-12%; width:4px; height:4px; animation:comet-steep 15s -4s linear infinite; }
+.comet-three::after { width:85px; transform:rotate(24deg); }
+.comet-four { left:-20%; top:72%; width:6px; height:6px; animation:comet-diagonal-up 18s -12s linear infinite; }
 .auth-game-mode .auth-layout,
 .auth-game-mode .auth-layout.register-active,
 .auth-game-mode .auth-layout:has(#register-form:not(.hidden)) {
@@ -887,6 +895,9 @@ body.auth-game-mode {
 }
 .auth-game-mode .auth-layout.register-active .auth-card,
 .auth-game-mode .auth-layout:has(#register-form:not(.hidden)) .auth-card { left:0; }
+.auth-game-mode .auth-layout.auth-login-exit { pointer-events:none; }
+.auth-game-mode .auth-layout.auth-login-exit .auth-copy { left:48%; }
+.auth-game-mode .auth-layout.auth-login-exit .auth-card { left:0; background:linear-gradient(145deg,#065f66f2,#064e55f7); box-shadow:inset 0 0 70px #2dd4bf14; }
 .auth-game-mode .academy-kicker { font-weight:650; }
 .auth-game-mode .academy-title { margin:10px 0 0; font-size:clamp(44px,4.7vw,66px); font-weight:700; text-shadow:0 8px 35px #020b125c; }
 .auth-game-mode .academy-title span,.auth-game-mode .academy-title span:last-child { position:relative; display:block; width:max-content; max-width:100%; color:transparent; background:linear-gradient(105deg,#f8fafc 0%,#f8fafc 35%,#99f6e4 47%,#fff 53%,#f8fafc 65%,#f8fafc 100%); background-size:250% 100%; background-position:120% 0; -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; animation:title-light-sweep 5.8s ease-in-out infinite; }
@@ -950,6 +961,9 @@ body.auth-game-mode {
 @keyframes aurora-wave { 0%,100% { opacity:.32; transform:translate3d(-3%,0,0) rotate(-10deg) scaleX(.94); } 50% { opacity:.72; transform:translate3d(7%,28px,50px) rotate(-5deg) scaleX(1.08); } }
 @keyframes nebula-breathe { 0%,100% { opacity:.45; transform:translate3d(0,0,15px) scale(.92); } 50% { opacity:.82; transform:translate3d(-28px,24px,70px) scale(1.12); } }
 @keyframes comet-flight { 0%,18% { opacity:0; transform:translate3d(-15vw,12vh,30px); } 28%,65% { opacity:1; } 82%,100% { opacity:0; transform:translate3d(108vw,-38vh,80px); } }
+@keyframes comet-diagonal-down { 0%,12% { opacity:0; transform:translate3d(0,0,20px) rotate(-12deg); } 18%,72% { opacity:1; } 86%,100% { opacity:0; transform:translate3d(126vw,42vh,90px) rotate(-12deg); } }
+@keyframes comet-diagonal-up { 0%,16% { opacity:0; transform:translate3d(0,0,10px) rotate(10deg); } 23%,68% { opacity:.9; } 84%,100% { opacity:0; transform:translate3d(128vw,-48vh,70px) rotate(10deg); } }
+@keyframes comet-steep { 0%,20% { opacity:0; transform:translate3d(0,0,15px) rotate(28deg); } 27%,64% { opacity:.8; } 78%,100% { opacity:0; transform:translate3d(82vw,112vh,65px) rotate(28deg); } }
 @keyframes halo-spin { to { transform:rotate(360deg); } }
 @keyframes neon-orbit { to { transform:rotate(360deg); } }
 @keyframes title-light-sweep { 0%,62% { background-position:120% 0; } 82%,100% { background-position:-120% 0; } }
@@ -961,6 +975,8 @@ body.auth-game-mode {
   .auth-game-mode .auth-layout,.auth-game-mode .auth-layout.register-active,.auth-game-mode .auth-layout:has(#register-form:not(.hidden)) { display:grid; height:auto; min-height:0; grid-template-columns:1fr; }
   .auth-game-mode .auth-copy,.auth-game-mode .auth-layout.register-active .auth-copy,.auth-game-mode .auth-layout:has(#register-form:not(.hidden)) .auth-copy { position:relative; left:auto; width:100%; height:auto; min-height:390px; padding:36px; border-radius:29px 29px 0 0; }
   .auth-game-mode .auth-card,.auth-game-mode .auth-layout.register-active .auth-card,.auth-game-mode .auth-layout:has(#register-form:not(.hidden)) .auth-card { position:relative; left:auto; width:100%; height:auto; min-height:500px; padding:32px; overflow:visible; }
+  .auth-game-mode .auth-layout.auth-login-exit .auth-copy { left:auto; transform:translateX(110%); }
+  .auth-game-mode .auth-layout.auth-login-exit .auth-card { left:auto; transform:translateX(-110%); transition:left .72s cubic-bezier(.7,-.08,.2,1.08),transform .72s cubic-bezier(.7,-.08,.2,1.08); }
 }
 @media (max-width:620px) {
   .auth-game-mode main { padding:12px; }
@@ -974,7 +990,7 @@ body.auth-game-mode {
   .planet-cyan { width:10px; height:10px; left:4%; bottom:12%; }
 }
 @media (prefers-reduced-motion:reduce) {
-  .cosmos-stars,.cosmos-orbit,.cosmos-planet,.auth-game-mode .auth-copy::before,.auth-game-mode .auth-layout::before,.auth-game-mode .academy-title span { animation:none; }
+  .cosmos-stars,.cosmos-orbit,.cosmos-planet,.cosmos-comet,.auth-game-mode .auth-copy::before,.auth-game-mode .auth-layout::before,.auth-game-mode .academy-title span { animation:none; }
   .auth-game-mode .portal-button,.auth-game-mode .auth-card .primary,.auth-game-mode .auth-card input { transition:none; }
 }
 
