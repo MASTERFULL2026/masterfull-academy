@@ -1350,9 +1350,11 @@ async function saveExamDraft(event) {
   if (!exam) return;
   const id = $("#editor-exam-id").value;
   const publishedExam = publishedExams.find(item => item.id === id);
-  if (publishedExam) {
+  const publishedCourse = publishedCourses.find(item => item.id === exam.courseId);
+  const shouldPublish = Boolean(publishedExam || (exam.published && publishedCourse));
+  if (shouldPublish) {
     const submit = event.submitter || $(".editor-save");
-    const course = findCourse(exam.courseId);
+    const course = publishedCourse || findCourse(exam.courseId);
     if (!sb || !course) {
       $("#exam-editor-error").textContent = "No se pudo conectar el examen con su curso publicado.";
       return;
@@ -1367,18 +1369,18 @@ async function saveExamDraft(event) {
       };
       const { data, error } = await sb.rpc("publish_academy_course", { payload });
       if (error) throw error;
-      if (!data || data.course_id !== course.id || Number(data.exam_count) !== 1) throw new Error("Supabase no confirmó la modificación del examen.");
+      if (!data || data.course_id !== course.id || Number(data.exam_count) !== 1) throw new Error("Supabase no confirmó la publicación del examen.");
       await loadCourseChanges();
       const verified = publishedExams.find(item => item.id === exam.id && item.courseId === exam.courseId);
       if (!verified || verified.title !== exam.title || verified.minutes !== exam.minutes || verified.questions.length !== exam.questions.length) {
-        throw new Error("No se pudieron verificar todos los cambios del examen publicado.");
+        throw new Error("No se pudo verificar el examen publicado completo.");
       }
       drafts.exams = drafts.exams.filter(item => item.id !== exam.id);
       saveDrafts();
       closeModal("exam-modal");
       renderTeacher();
     } catch (error) {
-      console.error("Modificar examen publicado:", error);
+      console.error("Publicar examen:", error);
       $("#exam-editor-error").className = "error";
       $("#exam-editor-error").textContent = error.message || translateError(error);
     } finally {
