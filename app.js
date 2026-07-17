@@ -34,6 +34,8 @@ let audioContext = null;
 let authTransitionPending = false;
 let minuteWarningPlayed = false;
 let appReady = false;
+let activeTeacherCourseId = null;
+let activeTeacherCourseSection = "overview";
 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
@@ -409,7 +411,14 @@ function renderApp() {
   $("#sound-btn")?.addEventListener("click", toggleSound);
   $("#profile-btn").addEventListener("click", openProfile);
   $("#logout-btn").addEventListener("click", logout);
-  $$("#session-area [data-teacher-tab]").forEach(button => button.addEventListener("click", () => switchTab("teacher", button.dataset.teacherTab, button)));
+  $$("#session-area [data-teacher-tab]").forEach(button => button.addEventListener("click", () => {
+    if (button.dataset.teacherTab === "teacher-exams") {
+      activeTeacherCourseId = null;
+      activeTeacherCourseSection = "overview";
+      renderTeacherExamWorkspace(getTeacherCourses(), getTeacherExams());
+    }
+    switchTab("teacher", button.dataset.teacherTab, button);
+  }));
   if (isTeacher) renderTeacher(); else renderStudent();
 }
 
@@ -600,8 +609,8 @@ function rowToGrade(row) {
 function renderTeacher() {
   show("teacher-view");
   $("#teacher-welcome").textContent = `Hola, ${currentUser.name}`;
-  const courses = [...new Map([...publishedCourses, ...drafts.courses].map(course => [course.id, course])).values()];
-  const exams = [...publishedExams, ...drafts.exams];
+  const courses = getTeacherCourses();
+  const exams = getTeacherExams();
   $("#teacher-stats").innerHTML =
     stat("Cursos publicados", publishedCourses.length, "courses", "published") +
     stat("Resultados", results.length, "results", "grades");
@@ -610,13 +619,18 @@ function renderTeacher() {
   $("#grades-tab-count").textContent = results.length;
   renderTeacherOverview();
   renderTeacherCourseList(false);
-  $("#teacher-exam-list").innerHTML = courses.length || exams.length
-    ? renderTeacherExamModules(courses, exams)
-    : emptyCard("Todavía no hay cursos ni evaluaciones.");
+  renderTeacherExamWorkspace(courses, exams);
   fillTeacherFilters();
   renderTeacherGrades(filteredTeacherResults());
   bindTeacherActions();
+  bindTeacherExamWorkspaceActions();
   $$(".stat-card").forEach(card => card.addEventListener("click", () => activateStat(card.dataset.statAction)));
+}
+function getTeacherCourses() {
+  return [...new Map([...publishedCourses, ...drafts.courses].map(course => [course.id, course])).values()];
+}
+function getTeacherExams() {
+  return [...publishedExams, ...drafts.exams];
 }
 function renderTeacherOverview() {
   const allCourses = [...publishedCourses, ...drafts.courses];
@@ -663,32 +677,79 @@ function renderTeacherCourses() {
   }).filter(Boolean);
   return published.concat(local).join("") || emptyCard("No se encontraron cursos.");
 }
-function renderTeacherExamModules(courses, exams) {
+function renderTeacherExamWorkspace(courses, exams) {
   const coursesById = new Map(courses.map(course => [course.id, course]));
   exams.forEach(exam => {
     if (!coursesById.has(exam.courseId)) coursesById.set(exam.courseId, { id: exam.courseId, name: "Curso no encontrado", description: "Revisa la asignación de estas evaluaciones." });
   });
-  return [...coursesById.values()].map(course => {
-    const courseExams = exams.filter(exam => exam.courseId === course.id);
-    const isDraftCourse = drafts.courses.some(item => item.id === course.id);
-    const publishedCount = courseExams.filter(exam => publishedExams.some(item => item.id === exam.id)).length;
-    const rows = courseExams.length
-      ? courseExams.map(renderTeacherExamRow).join("")
-      : `<div class="exam-module-empty"><span>${modernIcon("exams")}</span><div><strong>Este curso aún no tiene evaluaciones</strong><p>Agrega el primer examen para comenzar a construir el módulo.</p></div></div>`;
-    return `<details class="exam-course-module" open>
-      <summary class="exam-module-summary">
-        <span class="exam-module-chevron" aria-hidden="true"></span>
-        <span class="exam-module-course-icon">${modernIcon("course")}</span>
-        <span class="exam-module-heading"><small>MÓDULO DEL CURSO</small><strong>${esc(course.name)}</strong><span>${esc(course.description || "Sin descripción registrada")}</span></span>
-        <span class="exam-module-count">${quantity(courseExams.length, "evaluación", "evaluaciones")}</span>
-        <span class="status ${isDraftCourse ? "draft" : "published"}">${isDraftCourse ? "Curso local" : "Publicado"}</span>
-      </summary>
-      <div class="exam-module-body">
-        <div class="exam-module-toolbar"><span>${publishedCount ? `${quantity(publishedCount, "examen publicado", "exámenes publicados")}` : "Contenido del curso"}</span><button class="btn secondary create-exam-course" data-id="${esc(course.id)}" type="button">+ Agregar evaluación</button></div>
-        <div class="exam-module-items">${rows}</div>
-      </div>
-    </details>`;
-  }).join("");
+  const directory = $("#teacher-exam-directory");
+  const workspace = $("#teacher-course-workspace");
+  const activeCourse = coursesById.get(activeTeacherCourseId);
+  if (!activeCourse) {
+    activeTeacherCourseId = null;
+    directory.classList.remove("hidden");
+    workspace.classList.add("hidden");
+    $("#teacher-exam-course-list").innerHTML = coursesById.size
+      ? [...coursesById.values()].map(course => renderTeacherExamCourseLink(course, exams)).join("")
+      : emptyCard("Todavía no hay cursos. Crea uno para agregar evaluaciones.");
+    return;
+  }
+  directory.classList.add("hidden");
+  workspace.classList.remove("hidden");
+  workspace.innerHTML = renderTeacherCourseWorkspace(activeCourse, exams.filter(exam => exam.courseId === activeCourse.id));
+}
+function renderTeacherExamCourseLink(course, exams) {
+  const courseExams = exams.filter(exam => exam.courseId === course.id);
+  const questionCount = courseExams.reduce((total, exam) => total + exam.questions.length, 0);
+  const isDraftCourse = drafts.courses.some(item => item.id === course.id);
+  return `<button class="exam-course-link open-course-workspace" data-course-id="${esc(course.id)}" type="button">
+    <span class="exam-course-link-icon">${modernIcon("course")}</span>
+    <span class="exam-course-link-copy"><small>CURSO</small><strong>${esc(course.name)}</strong><span>${esc(course.description || "Sin descripción registrada")}</span></span>
+    <span class="exam-course-link-stats"><span><strong>${courseExams.length}</strong> ${courseExams.length === 1 ? "examen" : "exámenes"}</span><span><strong>${questionCount}</strong> preguntas en bancos</span></span>
+    <span class="status ${isDraftCourse ? "draft" : "published"}">${isDraftCourse ? "Curso local" : "Publicado"}</span>
+    <span class="exam-course-link-arrow" aria-hidden="true">→</span>
+  </button>`;
+}
+function renderTeacherCourseWorkspace(course, exams) {
+  const isDraftCourse = drafts.courses.some(item => item.id === course.id);
+  const publishedCount = exams.filter(exam => publishedExams.some(item => item.id === exam.id)).length;
+  const questionCount = exams.reduce((total, exam) => total + exam.questions.length, 0);
+  const sections = [
+    ["overview", "Resumen"],
+    ["exams", `Exámenes (${exams.length})`],
+    ["questions", `Banco de preguntas (${questionCount})`]
+  ];
+  let content = "";
+  if (activeTeacherCourseSection === "exams") content = renderTeacherCourseExams(course, exams);
+  else if (activeTeacherCourseSection === "questions") content = renderTeacherCourseQuestions(exams);
+  else content = renderTeacherCourseOverview(course, exams, publishedCount, questionCount);
+  return `<div class="course-workspace-page">
+    <button class="course-workspace-back" id="back-to-exam-courses" type="button">← Todos los cursos</button>
+    <header class="course-workspace-hero">
+      <span class="course-workspace-icon">${modernIcon("course")}</span>
+      <div><span class="eyebrow">ESPACIO DEL CURSO</span><h3>${esc(course.name)}</h3><p>${esc(course.description || "Sin descripción registrada")}</p></div>
+      <span class="status ${isDraftCourse ? "draft" : "published"}">${isDraftCourse ? "Curso local" : "Publicado"}</span>
+      <button class="btn primary create-exam-course" data-id="${esc(course.id)}" type="button">+ Nueva evaluación</button>
+    </header>
+    <nav class="course-workspace-nav" aria-label="Secciones de ${esc(course.name)}">${sections.map(([id, label]) => `<button class="course-subpage ${activeTeacherCourseSection === id ? "active" : ""}" data-course-section="${id}" type="button">${label}</button>`).join("")}</nav>
+    <section class="course-workspace-content">${content}</section>
+  </div>`;
+}
+function renderTeacherCourseOverview(course, exams, publishedCount, questionCount) {
+  const recent = exams.slice(0, 3);
+  return `<div class="course-overview-grid">
+    <section class="course-overview-main"><span class="eyebrow">RESUMEN</span><h4>Contenido de ${esc(course.name)}</h4><p>Desde este espacio puedes administrar las evaluaciones y sus bancos de preguntas sin mezclar contenido de otros cursos.</p>${recent.length ? `<div class="course-recent-list">${recent.map(exam => `<button class="course-recent-exam edit-exam" data-id="${esc(exam.id)}" type="button"><span>${modernIcon("exams")}</span><span><strong>${esc(exam.title)}</strong><small>${exam.minutes} min · ${quantity(exam.questions.length, "pregunta")}</small></span><b>Editar →</b></button>`).join("")}</div>` : `<div class="course-workspace-empty"><strong>Aún no hay evaluaciones</strong><p>Crea la primera evaluación de este curso.</p></div>`}</section>
+    <aside class="course-overview-stats"><div><span>Evaluaciones</span><strong>${exams.length}</strong></div><div><span>Publicadas</span><strong>${publishedCount}</strong></div><div><span>Preguntas en bancos</span><strong>${questionCount}</strong></div></aside>
+  </div>`;
+}
+function renderTeacherCourseExams(course, exams) {
+  return `<div class="course-subpage-head"><div><span class="eyebrow">EVALUACIONES</span><h4>Exámenes del curso</h4><p>Solo se muestra el contenido perteneciente a ${esc(course.name)}.</p></div><button class="btn primary create-exam-course" data-id="${esc(course.id)}" type="button">+ Crear examen</button></div>
+    <div class="course-exam-list">${exams.length ? exams.map(renderTeacherExamRow).join("") : `<div class="course-workspace-empty"><strong>Este curso todavía no tiene exámenes</strong><p>Usa “Crear examen” para agregar el primero.</p></div>`}</div>`;
+}
+function renderTeacherCourseQuestions(exams) {
+  const questionCount = exams.reduce((total, exam) => total + exam.questions.length, 0);
+  return `<div class="course-subpage-head"><div><span class="eyebrow">BANCO DE PREGUNTAS</span><h4>${quantity(questionCount, "pregunta")}</h4><p>Las preguntas están organizadas por el examen al que pertenecen.</p></div></div>
+    <div class="course-question-banks">${exams.length ? exams.map(exam => `<article class="course-question-bank"><span>${modernIcon("exams")}</span><div><strong>${esc(exam.title)}</strong><small>${quantity(exam.questions.length, "pregunta")} · ${exam.optionCount} opciones por pregunta</small></div><button class="btn secondary edit-exam" data-id="${esc(exam.id)}" type="button">Abrir banco</button></article>`).join("") : `<div class="course-workspace-empty"><strong>No hay bancos de preguntas</strong><p>Los bancos aparecerán cuando crees una evaluación.</p></div>`}</div>`;
 }
 function renderTeacherExamRow(exam) {
   const isDraft = !publishedExams.some(item => item.id === exam.id);
@@ -696,7 +757,6 @@ function renderTeacherExamRow(exam) {
     ? `<button class="btn secondary edit-exam" data-id="${esc(exam.id)}" type="button">Editar</button><button class="btn secondary export-draft" data-id="${esc(exam.id)}" type="button">Exportar JSON</button><button class="icon-btn delete delete-exam" data-id="${esc(exam.id)}" type="button">Eliminar</button>`
     : `<button class="btn secondary edit-exam" data-id="${esc(exam.id)}" type="button">Modificar</button>`;
   return `<article class="exam-module-item ${isDraft ? "is-draft" : ""}">
-    <span class="exam-module-drag" aria-hidden="true">⋮⋮</span>
     <span class="exam-module-type-icon">${modernIcon("exams")}</span>
     <div class="exam-module-item-main">
       <div class="exam-module-title-line"><h4>${esc(exam.title)}</h4><span class="status ${isDraft ? "draft" : "published"}">${isDraft ? "Borrador local" : "Publicado"}</span></div>
@@ -710,14 +770,14 @@ function bindTeacherActions() {
   $$(".overview-new-course-dynamic").forEach(button => button.addEventListener("click", () => openCourseModal()));
   $$(".overview-new-exam-dynamic").forEach(button => button.addEventListener("click", () => openExamModal()));
   $$(".view-course").forEach(button => button.addEventListener("click", () => switchTab("teacher", "teacher-exams", $('[data-teacher-tab="teacher-exams"]'))));
-  $$(".create-exam-course").forEach(button => button.addEventListener("click", () => openExamModal(null, button.dataset.id)));
+  $$(".create-exam-course").filter(button => !button.closest("#teacher-course-workspace")).forEach(button => button.addEventListener("click", () => openExamModal(null, button.dataset.id)));
   $$(".edit-course").forEach(button => button.addEventListener("click", () => openCourseModal(button.dataset.id)));
   $$(".delete-course").forEach(button => button.addEventListener("click", () => deleteCourseDraft(button.dataset.id)));
   $$(".edit-published-course").forEach(button => button.addEventListener("click", () => openCourseModal(button.dataset.id)));
   $$(".delete-published-course").forEach(button => button.addEventListener("click", () => deletePublishedCourse(button.dataset.id)));
-  $$(".edit-exam").forEach(button => button.addEventListener("click", () => openExamModal(button.dataset.id)));
-  $$(".delete-exam").forEach(button => button.addEventListener("click", () => deleteExamDraft(button.dataset.id)));
-  $$(".export-draft").forEach(button => button.addEventListener("click", () => { openExamModal(button.dataset.id); setTimeout(exportCurrentExam, 50); }));
+  $$(".edit-exam").filter(button => !button.closest("#teacher-course-workspace")).forEach(button => button.addEventListener("click", () => openExamModal(button.dataset.id)));
+  $$(".delete-exam").filter(button => !button.closest("#teacher-course-workspace")).forEach(button => button.addEventListener("click", () => deleteExamDraft(button.dataset.id)));
+  $$(".export-draft").filter(button => !button.closest("#teacher-course-workspace")).forEach(button => button.addEventListener("click", () => { openExamModal(button.dataset.id); setTimeout(exportCurrentExam, 50); }));
   $$(".export-course").forEach(button => button.addEventListener("click", () => exportCourseDraft(button.dataset.id)));
   $$(".publish-course").forEach(button => button.addEventListener("click", () => openPublishCourseModal(button.dataset.id)));
 }
@@ -741,6 +801,29 @@ function openPublishCourseModal(id) {
   $("#publish-exam-options").innerHTML = exams.map(exam => `<label class="publish-exam-option"><input type="checkbox" name="publish-exam" value="${esc(exam.id)}" checked><span><strong>${esc(exam.title)}</strong><small>${quantity(exam.questions.length, "pregunta")} · ${exam.minutes} min</small></span></label>`).join("");
   $("#publish-course-error").textContent = "";
   $("#publish-course-modal").classList.remove("hidden");
+}
+function bindTeacherExamWorkspaceActions() {
+  $$(".open-course-workspace").forEach(button => button.addEventListener("click", () => {
+    activeTeacherCourseId = button.dataset.courseId;
+    activeTeacherCourseSection = "overview";
+    renderTeacherExamWorkspace(getTeacherCourses(), getTeacherExams());
+    bindTeacherExamWorkspaceActions();
+  }));
+  $("#back-to-exam-courses")?.addEventListener("click", () => {
+    activeTeacherCourseId = null;
+    activeTeacherCourseSection = "overview";
+    renderTeacherExamWorkspace(getTeacherCourses(), getTeacherExams());
+    bindTeacherExamWorkspaceActions();
+  });
+  $$(".course-subpage").forEach(button => button.addEventListener("click", () => {
+    activeTeacherCourseSection = button.dataset.courseSection;
+    renderTeacherExamWorkspace(getTeacherCourses(), getTeacherExams());
+    bindTeacherExamWorkspaceActions();
+  }));
+  $$("#teacher-course-workspace .create-exam-course").forEach(button => button.addEventListener("click", () => openExamModal(null, button.dataset.id)));
+  $$("#teacher-course-workspace .edit-exam").forEach(button => button.addEventListener("click", () => openExamModal(button.dataset.id)));
+  $$("#teacher-course-workspace .delete-exam").forEach(button => button.addEventListener("click", () => deleteExamDraft(button.dataset.id)));
+  $$("#teacher-course-workspace .export-draft").forEach(button => button.addEventListener("click", () => { openExamModal(button.dataset.id); setTimeout(exportCurrentExam, 50); }));
 }
 async function publishSelectedCourseExams(event) {
   event.preventDefault();
