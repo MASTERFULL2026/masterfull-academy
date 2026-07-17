@@ -826,11 +826,18 @@ body.auth-game-mode {
 .cosmos-comet { position:absolute; z-index:1; width:7px; height:7px; opacity:0; border-radius:50%; background:#ecfeff; box-shadow:0 0 10px #fff,0 0 24px #22d3ee,0 0 48px #14b8a6; transform-style:preserve-3d; }
 .cosmos-comet::after { content:""; position:absolute; top:3px; right:5px; width:clamp(90px,12vw,180px); height:1.5px; border-radius:999px; background:linear-gradient(90deg,transparent,#67e8f9c4); transform-origin:right center; }
 .comet-one { left:-12%; top:9%; animation:comet-diagonal-down 10s -1s linear infinite; }
-.comet-two { left:-16%; top:43%; width:5px; height:5px; animation:comet-diagonal-up 13s -7s linear infinite; }
-.comet-two::after { width:110px; background:linear-gradient(90deg,transparent,#a7f3d0b8); }
 .comet-three { left:18%; top:-12%; width:4px; height:4px; animation:comet-steep 15s -4s linear infinite; }
 .comet-three::after { width:85px; transform:rotate(24deg); }
-.comet-four { left:-20%; top:72%; width:6px; height:6px; animation:comet-diagonal-up 18s -12s linear infinite; }
+.cosmos-supernova { position:absolute; left:50%; top:50%; z-index:3; width:18px; height:18px; opacity:0; border-radius:50%; background:radial-gradient(circle,#fff 0 12%,#a5f3fc 24%,#22d3ee 43%,#0ea5e9 62%,transparent 72%); box-shadow:0 0 24px #fff,0 0 70px #67e8f9,0 0 140px #14b8a6; pointer-events:none; }
+.cosmos-supernova::before,.cosmos-supernova::after { content:""; position:absolute; left:50%; top:50%; border-radius:50%; pointer-events:none; }
+.cosmos-supernova::before { width:120px; height:120px; border:2px solid #a5f3fca8; box-shadow:0 0 35px #22d3ee8c,inset 0 0 35px #38bdf87a; }
+.cosmos-supernova::after { width:260px; height:16px; background:linear-gradient(90deg,transparent,#ecfeff 42%,#fff 50%,#ecfeff 58%,transparent); filter:blur(2px); }
+body.auth-galactic-burst .cosmos-supernova { animation:galactic-burst .95s cubic-bezier(.16,.72,.22,1) both; }
+body.auth-galactic-burst .cosmos-supernova::before { animation:galactic-ring .95s ease-out both; }
+body.auth-galactic-burst .cosmos-supernova::after { animation:galactic-flare .85s ease-out both; }
+body.auth-galactic-burst .auth-layout { border-color:transparent; background:transparent; box-shadow:none; backdrop-filter:none; }
+body.auth-galactic-burst .auth-layout::before,body.auth-galactic-burst .auth-layout::after { opacity:0 !important; transition:opacity .18s ease; }
+body.auth-galactic-burst .cosmos-stars { filter:brightness(1.65); transition:filter .2s ease; }
 .auth-game-mode .auth-layout,
 .auth-game-mode .auth-layout.register-active,
 .auth-game-mode .auth-layout:has(#register-form:not(.hidden)) {
@@ -962,8 +969,10 @@ body.auth-game-mode {
 @keyframes nebula-breathe { 0%,100% { opacity:.45; transform:translate3d(0,0,15px) scale(.92); } 50% { opacity:.82; transform:translate3d(-28px,24px,70px) scale(1.12); } }
 @keyframes comet-flight { 0%,18% { opacity:0; transform:translate3d(-15vw,12vh,30px); } 28%,65% { opacity:1; } 82%,100% { opacity:0; transform:translate3d(108vw,-38vh,80px); } }
 @keyframes comet-diagonal-down { 0%,12% { opacity:0; transform:translate3d(0,0,20px) rotate(-12deg); } 18%,72% { opacity:1; } 86%,100% { opacity:0; transform:translate3d(126vw,42vh,90px) rotate(-12deg); } }
-@keyframes comet-diagonal-up { 0%,16% { opacity:0; transform:translate3d(0,0,10px) rotate(10deg); } 23%,68% { opacity:.9; } 84%,100% { opacity:0; transform:translate3d(128vw,-48vh,70px) rotate(10deg); } }
 @keyframes comet-steep { 0%,20% { opacity:0; transform:translate3d(0,0,15px) rotate(28deg); } 27%,64% { opacity:.8; } 78%,100% { opacity:0; transform:translate3d(82vw,112vh,65px) rotate(28deg); } }
+@keyframes galactic-burst { 0% { opacity:0; transform:translate(-50%,-50%) scale(.05); } 16% { opacity:1; } 62% { opacity:.92; } 100% { opacity:0; transform:translate(-50%,-50%) scale(26); } }
+@keyframes galactic-ring { 0% { opacity:0; transform:translate(-50%,-50%) scale(.05); } 22% { opacity:1; } 100% { opacity:0; transform:translate(-50%,-50%) scale(5.2); } }
+@keyframes galactic-flare { 0% { opacity:0; transform:translate(-50%,-50%) rotate(-12deg) scaleX(.05); } 18% { opacity:1; } 100% { opacity:0; transform:translate(-50%,-50%) rotate(12deg) scaleX(5.5); } }
 @keyframes halo-spin { to { transform:rotate(360deg); } }
 @keyframes neon-orbit { to { transform:rotate(360deg); } }
 @keyframes title-light-sweep { 0%,62% { background-position:120% 0; } 82%,100% { background-position:-120% 0; } }
@@ -990,7 +999,7 @@ body.auth-game-mode {
   .planet-cyan { width:10px; height:10px; left:4%; bottom:12%; }
 }
 @media (prefers-reduced-motion:reduce) {
-  .cosmos-stars,.cosmos-orbit,.cosmos-planet,.cosmos-comet,.auth-game-mode .auth-copy::before,.auth-game-mode .auth-layout::before,.auth-game-mode .academy-title span { animation:none; }
+  .cosmos-stars,.cosmos-orbit,.cosmos-planet,.cosmos-comet,.cosmos-supernova,.cosmos-supernova::before,.cosmos-supernova::after,.auth-game-mode .auth-copy::before,.auth-game-mode .auth-layout::before,.auth-game-mode .academy-title span { animation:none; }
   .auth-game-mode .portal-button,.auth-game-mode .auth-card .primary,.auth-game-mode .auth-card input { transition:none; }
 }
 

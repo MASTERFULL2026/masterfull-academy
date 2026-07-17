@@ -387,6 +387,7 @@ function normalizeAnswer(answer, options, index, zeroBasedNumber = false) {
 
 function renderApp() {
   document.body.classList.remove("session-loading");
+  document.body.classList.remove("auth-galactic-burst");
   const isTeacher = currentUser?.role === "teacher";
   document.body.classList.toggle("teacher-shell-mode", isTeacher);
   if (!currentUser) {
@@ -534,6 +535,7 @@ async function loginUser(event) {
     renderApp();
   } catch (error) {
     console.error("Login:", error);
+    document.body.classList.remove("auth-galactic-burst");
     $("#auth-view .auth-layout")?.classList.remove("auth-login-exit");
     $("#login-error").textContent = translateError(error);
   } finally {
@@ -755,18 +757,19 @@ function playAuthLoginExit() {
   if (!layout || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return Promise.resolve();
   layout.classList.add("auth-login-exit");
   return new Promise(resolve => {
-    let completed = false;
-    const finish = () => {
-      if (completed) return;
-      completed = true;
+    let burstStarted = false;
+    const startBurst = () => {
+      if (burstStarted) return;
+      burstStarted = true;
       layout.removeEventListener("transitionend", onTransitionEnd);
-      resolve();
+      document.body.classList.add("auth-galactic-burst");
+      window.setTimeout(resolve, 980);
     };
     const onTransitionEnd = event => {
-      if (event.propertyName === "transform" && event.target.classList.contains("auth-card")) finish();
+      if (event.propertyName === "transform" && event.target.classList.contains("auth-card")) startBurst();
     };
     layout.addEventListener("transitionend", onTransitionEnd);
-    window.setTimeout(finish, 860);
+    window.setTimeout(startBurst, 860);
   });
 }
 function fillTeacherFilters() {
