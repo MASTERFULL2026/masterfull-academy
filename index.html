@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Plataforma de cursos y exámenes para profesores y alumnos.">
   <title>Masterfull Academy | Cursos y exámenes</title>
-  <link rel="stylesheet" href="styles.css?v=20260721-4">
+  <link rel="stylesheet" href="styles.css?v=20260721-5">
 </head>
 <body class="session-loading">
   <header class="topbar">
@@ -81,6 +81,7 @@
         <div class="teacher-workspace">
           <header class="teacher-page-head">
             <div><span class="eyebrow">PANEL DEL PROFESOR</span><h2 id="teacher-welcome">Hola, profesor</h2><p>Resumen académico, contenido reciente y seguimiento de estudiantes.</p></div>
+            <div class="teacher-head-actions"><button class="btn secondary" id="teacher-head-new-exam" type="button">+ Evaluación</button><button class="btn primary" id="teacher-head-new-course" type="button">+ Curso</button></div>
           </header>
 
           <div id="teacher-home" class="tab-content active">
@@ -117,8 +118,8 @@
       <div id="student-stats" class="stats"></div>
       <div id="student-overview" class="student-dashboard-overview" aria-live="polite"></div>
       <div class="tabs">
-        <button class="tab active" data-student-tab="student-courses">Cursos y exámenes</button>
-        <button class="tab" data-student-tab="student-grades">Mis notas</button>
+        <button class="tab active" data-student-tab="student-courses">Cursos</button>
+        <button class="tab" data-student-tab="student-grades">Calificaciones</button>
       </div>
       <div id="student-courses" class="tab-content active"><div id="student-course-list"></div></div>
       <div id="student-grades" class="tab-content">
@@ -301,6 +302,6 @@
   <footer>Masterfull Academy · Plataforma educativa digital.</footer>
   <script src="config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="app.js?v=20260721-4"></script>
+  <script src="app.js?v=20260721-5"></script>
 </body>
 </html>
