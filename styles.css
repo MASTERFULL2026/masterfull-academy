@@ -2554,3 +2554,81 @@ body:not(.app-shell-mode) .topbar .sound-btn { min-width: 0; }
   .lesson-navigation .btn { flex:1; padding:11px 9px; }
   .lesson-navigation > span { display:none; }
 }
+
+/* Rediseño visible de los paneles principales */
+.app-shell-mode { background:#eef3f9; }
+.app-shell-mode #teacher-stats,.app-shell-mode #student-stats { grid-template-columns:repeat(4,minmax(0,1fr)); gap:13px; margin-bottom:20px; }
+.app-shell-mode #teacher-stats .stat-card,.app-shell-mode #student-stats .stat-card { min-height:98px; padding:17px; border:1px solid #e5e7eb; border-left:0; border-radius:13px; box-shadow:0 7px 22px #0f172a09; }
+.app-shell-mode #teacher-stats .stat-card::after,.app-shell-mode #student-stats .stat-card::after { display:none; }
+.app-shell-mode #teacher-stats .stat-card > span:first-child,.app-shell-mode #student-stats .stat-card > span:first-child { width:42px; height:42px; color:#2563eb; border-radius:11px; background:#eff6ff; }
+.app-shell-mode #teacher-stats .stat-card:nth-child(2) > span:first-child,.app-shell-mode #student-stats .stat-card:nth-child(2) > span:first-child { color:#0e7490; background:#ecfeff; }
+.app-shell-mode #teacher-stats .stat-card:nth-child(3) > span:first-child,.app-shell-mode #student-stats .stat-card:nth-child(3) > span:first-child { color:#15803d; background:#f0fdf4; }
+.app-shell-mode #teacher-stats .stat-card:nth-child(4) > span:first-child,.app-shell-mode #student-stats .stat-card:nth-child(4) > span:first-child { color:#a16207; background:#fefce8; }
+.app-shell-mode #teacher-stats .stat-card strong,.app-shell-mode #student-stats .stat-card strong { color:#0f172a; font-size:24px; font-weight:600; }
+.app-shell-mode #teacher-stats .stat-card small,.app-shell-mode #student-stats .stat-card small { font-size:11px; }
+.teacher-overview { display:block; }
+.teacher-command-hero { position:relative; display:grid; grid-template-columns:minmax(0,1.6fr) minmax(280px,.75fr); align-items:center; gap:35px; min-height:255px; margin-bottom:20px; padding:35px 38px; overflow:hidden; color:#fff; border-radius:18px; background:linear-gradient(130deg,#0f172a 0%,#172554 72%,#1e3a8a 100%); }
+.teacher-command-hero::after { content:""; position:absolute; right:-85px; top:-105px; width:310px; height:310px; border:55px solid #22d3ee12; border-radius:50%; }
+.teacher-command-hero > * { position:relative; z-index:1; }
+.teacher-command-hero .eyebrow { color:#67e8f9; font-size:9px; }
+.teacher-command-hero h3 { max-width:650px; margin:8px 0 9px; color:#fff; font-size:clamp(24px,3vw,34px); font-weight:600; line-height:1.15; letter-spacing:-.035em; }
+.teacher-command-hero p { max-width:650px; margin:0 0 23px; color:#cbd5e1; font-size:12.5px; }
+.teacher-command-hero > div > div { display:flex; gap:10px; flex-wrap:wrap; }
+.teacher-command-hero .primary { color:#fff; background:#2563eb; box-shadow:none; }
+.teacher-hero-secondary { color:#e2e8f0; border-color:#ffffff30; background:#ffffff0c; box-shadow:none; }
+.teacher-command-hero > aside { display:grid; grid-template-columns:repeat(3,1fr); overflow:hidden; border:1px solid #ffffff1d; border-radius:14px; background:#ffffff0b; }
+.teacher-command-hero > aside > div { padding:20px 14px; text-align:center; border-right:1px solid #ffffff17; }
+.teacher-command-hero > aside > div:last-child { border-right:0; }
+.teacher-command-hero > aside span,.teacher-command-hero > aside strong { display:block; }
+.teacher-command-hero > aside span { color:#94a3b8; font-size:9px; text-transform:uppercase; letter-spacing:.06em; }
+.teacher-command-hero > aside strong { margin-top:7px; color:#fff; font-size:25px; font-weight:600; }
+.teacher-dashboard-grid { display:grid; grid-template-columns:minmax(0,1.55fr) minmax(275px,.7fr); gap:20px; }
+.teacher-dashboard-grid .overview-panel { border:1px solid #e5e7eb; border-radius:15px; box-shadow:0 7px 22px #0f172a08; }
+.teacher-dashboard-grid .overview-course-row { grid-template-columns:7px minmax(0,1fr) auto auto; min-height:76px; }
+.teacher-dashboard-grid .overview-course-color { background:#2563eb; }
+.teacher-dashboard-grid .overview-course-row:nth-child(2n) .overview-course-color { background:#22d3ee; }
+.teacher-dashboard-grid .overview-action-panel { color:#0f172a; background:#fff; }
+.teacher-dashboard-grid .overview-action-panel .eyebrow { color:#2563eb; }
+.teacher-dashboard-grid .overview-action-panel p { color:#64748b; }
+.teacher-dashboard-grid .overview-action-panel .primary { background:#2563eb; box-shadow:none; }
+.student-dashboard-overview { margin-bottom:22px; }
+.student-next-hero { position:relative; display:grid; grid-template-columns:minmax(0,1fr) 170px; align-items:center; gap:28px; min-height:230px; padding:32px 38px; overflow:hidden; color:#fff; border-radius:18px; background:linear-gradient(130deg,#0f172a,#1e3a8a); }
+.student-next-hero::after { content:""; position:absolute; right:-70px; bottom:-145px; width:330px; height:330px; border:60px solid #22d3ee10; border-radius:50%; }
+.student-next-hero > * { position:relative; z-index:1; }
+.student-next-hero .eyebrow { color:#67e8f9; font-size:9px; }
+.student-next-hero h3 { max-width:650px; margin:8px 0; color:#fff; font-size:clamp(24px,3vw,34px); font-weight:600; line-height:1.18; letter-spacing:-.035em; }
+.student-next-hero p { margin:0 0 21px; color:#cbd5e1; font-size:12px; }
+.student-next-hero .primary { background:#2563eb; box-shadow:none; }
+.student-route-ring { display:grid; place-items:center; align-content:center; width:145px; height:145px; justify-self:end; border:12px solid #ffffff1e; border-top-color:#22d3ee; border-radius:50%; background:#ffffff0a; }
+.student-route-ring span,.student-route-ring small { display:block; }
+.student-route-ring span { color:#fff; font-size:31px; font-weight:600; }
+.student-route-ring small { margin-top:3px; color:#94a3b8; font-size:9px; }
+.student-insight-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:13px; margin-top:14px; }
+.student-insight-grid article { display:flex; align-items:flex-start; gap:12px; min-height:128px; padding:17px; border:1px solid #e5e7eb; border-radius:13px; background:#fff; box-shadow:0 7px 22px #0f172a07; }
+.student-insight-icon { display:grid; place-items:center; width:37px; height:37px; flex:0 0 auto; color:#2563eb; border-radius:10px; background:#eff6ff; }
+.student-insight-icon .modern-icon { width:19px; height:19px; }
+.student-insight-grid small,.student-insight-grid strong,.student-insight-grid p { display:block; margin:0; }
+.student-insight-grid small { color:#64748b; font-size:9px; }
+.student-insight-grid strong { margin-top:5px; color:#0f172a; font-size:22px; font-weight:600; }
+.student-insight-grid p { margin-top:5px; color:#94a3b8; font-size:9.5px; line-height:1.4; }
+.student-insight-grid .student-last-activity { max-width:145px; overflow:hidden; font-size:13px; text-overflow:ellipsis; white-space:nowrap; }
+.app-shell-mode #student-view > .tabs { margin-top:25px; }
+.app-shell-mode #student-view .student-course { border:1px solid #e5e7eb; box-shadow:0 8px 24px #0f172a08; }
+@media (max-width:1100px) {
+  .app-shell-mode #teacher-stats,.app-shell-mode #student-stats,.student-insight-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .teacher-command-hero { grid-template-columns:1fr; }
+  .teacher-command-hero > aside { max-width:500px; }
+}
+@media (max-width:800px) {
+  .teacher-dashboard-grid { grid-template-columns:1fr; }
+  .teacher-command-hero,.student-next-hero { grid-template-columns:1fr; padding:27px 23px; }
+  .student-route-ring { width:115px; height:115px; justify-self:start; border-width:9px; }
+  .teacher-dashboard-grid .overview-course-row { grid-template-columns:7px minmax(0,1fr) auto; }
+  .teacher-dashboard-grid .overview-course-row .overview-row-action { grid-column:2 / -1; justify-self:start; }
+}
+@media (max-width:520px) {
+  .app-shell-mode #teacher-stats,.app-shell-mode #student-stats,.student-insight-grid { grid-template-columns:1fr; }
+  .teacher-command-hero > aside { grid-template-columns:1fr; }
+  .teacher-command-hero > aside > div { border-right:0; border-bottom:1px solid #ffffff17; }
+  .teacher-command-hero > aside > div:last-child { border-bottom:0; }
+}

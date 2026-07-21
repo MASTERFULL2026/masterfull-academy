@@ -92,6 +92,9 @@ function modernIcon(name) {
     ,task: `<path d="M7 4h10v17H7z"/><path d="M9 4V2h6v2M10 9h4M10 13h4M10 17h3"/>`
     ,quiz: `<circle cx="12" cy="12" r="9"/><path d="M9.8 9a2.3 2.3 0 1 1 3.2 2.1c-.8.4-1 1-1 1.9M12 17h.01"/>`
     ,link: `<path d="M10 13a5 5 0 0 0 7.5.5l2-2a5 5 0 0 0-7-7l-1.2 1.2M14 11a5 5 0 0 0-7.5-.5l-2 2a5 5 0 0 0 7 7l1.2-1.2"/>`
+    ,progress: `<path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/>`
+    ,certificate: `<circle cx="12" cy="9" r="6"/><path d="m8.5 14-1 8 4.5-2 4.5 2-1-8M9.5 9l1.5 1.5L14.5 7"/>`
+    ,students: `<circle cx="9" cy="8" r="3"/><path d="M3 19a6 6 0 0 1 12 0M16 5.5a3 3 0 0 1 0 5M17 14a5 5 0 0 1 4 5"/>`
   };
   const aliases = { "▦": "courses", "▤": "exams", "✓": "results", "◇": "course" };
   const key = aliases[name] || name;
@@ -655,9 +658,13 @@ function renderTeacher() {
   $("#teacher-welcome").textContent = `Hola, ${currentUser.name}`;
   const courses = getTeacherCourses();
   const exams = getTeacherExams();
+  const moduleCount = courses.reduce((total, course) => total + normalizeModules(course.modules).length, 0);
+  const studentCount = new Set(results.map(result => result.studentId)).size;
   $("#teacher-stats").innerHTML =
-    stat("Cursos publicados", publishedCourses.length, "courses", "published") +
-    stat("Resultados", results.length, "results", "grades");
+    stat("Cursos totales", courses.length, "courses", "published") +
+    stat("Módulos creados", moduleCount, "progress", "published") +
+    stat("Evaluaciones", exams.length, "exams", "published") +
+    stat("Estudiantes activos", studentCount, "students", "grades");
   $("#courses-tab-count").textContent = publishedCourses.length + drafts.courses.length;
   $("#exams-tab-count").textContent = exams.length;
   $("#grades-tab-count").textContent = results.length;
@@ -681,20 +688,24 @@ function renderTeacherOverview() {
   const allExams = [...publishedExams, ...drafts.exams];
   const recentCourses = allCourses.slice(0, 4);
   const draftCount = drafts.courses.length + drafts.exams.length;
+  const moduleCount = allCourses.reduce((total, course) => total + normalizeModules(course.modules).length, 0);
+  const activityCount = allCourses.reduce((total, course) => total + normalizeModules(course.modules).reduce((sum, module) => sum + module.activities.length, 0), 0);
   const courseRows = recentCourses.length ? recentCourses.map(course => {
     const examCount = allExams.filter(exam => exam.courseId === course.id).length;
     const isDraft = drafts.courses.some(item => item.id === course.id);
-    return `<article class="overview-course-row"><span class="overview-course-color" aria-hidden="true"></span><div><strong>${esc(course.name)}</strong><small>${quantity(examCount, "evaluación", "evaluaciones")} · ${isDraft ? "Borrador local" : "Publicado"}</small></div><button class="overview-row-action create-exam-course" data-id="${esc(course.id)}" type="button">+ Evaluación</button></article>`;
+    const modules = normalizeModules(course.modules);
+    const activities = modules.reduce((total, module) => total + module.activities.length, 0);
+    return `<article class="overview-course-row"><span class="overview-course-color" aria-hidden="true"></span><div><strong>${esc(course.name)}</strong><small>${quantity(modules.length, "módulo", "módulos")} · ${quantity(activities, "actividad", "actividades")} · ${quantity(examCount, "evaluación", "evaluaciones")}</small></div><span class="status ${isDraft ? "draft" : "published"}">${isDraft ? "Borrador" : "Publicado"}</span><button class="overview-row-action create-exam-course" data-id="${esc(course.id)}" type="button">+ Evaluación</button></article>`;
   }).join("") : `<div class="overview-empty"><strong>Tu espacio está listo</strong><p>Crea el primer curso y después agrega su banco de preguntas.</p><button class="btn primary overview-new-course-dynamic" type="button">Crear primer curso</button></div>`;
-  $("#teacher-overview").innerHTML = `
-    <section class="overview-panel overview-courses-panel">
+  $("#teacher-overview").innerHTML = `<section class="teacher-command-hero"><div><span class="eyebrow">CENTRO DE ENSEÑANZA</span><h3>Todo tu contenido, organizado en un solo lugar</h3><p>Crea rutas de aprendizaje por módulos, publica evaluaciones y acompaña el avance de tus estudiantes.</p><div><button class="btn primary overview-new-course-dynamic" type="button">+ Crear curso</button><button class="btn teacher-hero-secondary overview-new-exam-dynamic" type="button">Crear evaluación</button></div></div><aside><div><span>Módulos</span><strong>${moduleCount}</strong></div><div><span>Actividades</span><strong>${activityCount}</strong></div><div><span>Borradores</span><strong>${draftCount}</strong></div></aside></section>
+    <div class="teacher-dashboard-grid"><section class="overview-panel overview-courses-panel">
       <div class="overview-panel-head"><div><span class="eyebrow">CURSOS RECIENTES</span><h3>Tu contenido</h3></div><button class="overview-link" data-overview-tab="teacher-courses" type="button">Ver todos</button></div>
       <div class="overview-course-list">${courseRows}</div>
     </section>
     <aside class="overview-side">
-      <section class="overview-panel overview-action-panel"><span class="eyebrow">ACCIÓN RÁPIDA</span><h3>Construye una evaluación</h3><p>Configura intentos, tiempo, preguntas aleatorias e importa contenido JSON.</p><button class="btn primary overview-new-exam-dynamic" type="button">Crear evaluación</button></section>
-      <section class="overview-panel overview-status-panel"><div><span>Borradores pendientes</span><strong>${draftCount}</strong></div><div><span>Intentos registrados</span><strong>${results.length}</strong></div><button class="overview-link" data-overview-tab="teacher-grades" type="button">Abrir calificaciones</button></section>
-    </aside>`;
+      <section class="overview-panel overview-action-panel"><span class="eyebrow">SEGUIMIENTO</span><h3>Rendimiento académico</h3><p>Revisa entregas, notas e intentos recientes desde el libro de calificaciones.</p><button class="btn primary" data-overview-tab="teacher-grades" type="button">Ver calificaciones</button></section>
+      <section class="overview-panel overview-status-panel"><div><span>Intentos registrados</span><strong>${results.length}</strong></div><div><span>Cursos publicados</span><strong>${publishedCourses.length}</strong></div></section>
+    </aside></div>`;
 }
 function renderTeacherCourseList(bind = true) {
   $("#teacher-course-list").innerHTML = renderTeacherCourses();
@@ -1026,7 +1037,12 @@ function renderStudent() {
   $("#student-welcome").textContent = `Hola, ${currentUser.name}`;
   const myGrades = results.filter(grade => grade.studentId === currentUser.id);
   const courses = publishedCourses.filter(course => publishedExams.some(exam => exam.courseId === course.id) || normalizeModules(course.modules).length);
-  $("#student-stats").innerHTML = stat("Cursos disponibles", courses.length, "▦") + stat("Exámenes", publishedExams.length, "▤") + stat("Resultados", myGrades.length, "✓");
+  const summaries = courses.map(courseStudentSummary);
+  const inProgressCount = summaries.filter(summary => summary.percent > 0 && summary.percent < 100).length;
+  const completedCourses = summaries.filter(summary => summary.percent === 100 && summary.total > 0).length;
+  const pendingExams = publishedExams.filter(exam => !myGrades.some(grade => grade.examId === exam.id)).length;
+  $("#student-stats").innerHTML = stat("Cursos matriculados", courses.length, "courses") + stat("En progreso", inProgressCount, "progress") + stat("Completados", completedCourses, "results") + stat("Evaluaciones pendientes", pendingExams, "exams");
+  renderStudentOverview(courses, myGrades, summaries, pendingExams, completedCourses);
   $("#student-course-list").innerHTML = courses.length ? courses.map(course => {
     const exams = publishedExams.filter(exam => exam.courseId === course.id);
     return `<article class="student-course panel" data-course-id="${esc(course.id)}"><div class="course-heading"><div class="course-icon">${modernIcon("course")}</div><div><span class="eyebrow">CURSO</span><h3>${esc(course.name)}</h3><p>${esc(course.description || "Sin descripción")} · Profesor: ${esc(course.teacherName || "Profesor")}</p></div></div>${renderStudentCourseModules(course, myGrades)}${exams.length ? `<div class="exam-rows"><h4>Evaluaciones publicadas</h4>${exams.map(exam => renderStudentExamRow(exam, myGrades)).join("")}</div>` : ""}</article>`;
@@ -1043,6 +1059,21 @@ function renderStudent() {
   $$(".student-activity-action").forEach(button => button.addEventListener("click", event => { event.stopPropagation(); toggleActivityProgress(button.dataset.courseId, button.dataset.activityId); }));
   $$(".open-lesson").forEach(button => button.addEventListener("click", () => openLesson(button.dataset.courseId, button.dataset.activityId)));
   $$(".continue-course").forEach(button => button.addEventListener("click", () => openLesson(button.dataset.courseId, button.dataset.activityId)));
+}
+function courseStudentSummary(course) {
+  const activities = normalizeModules(course.modules).flatMap(module => module.activities);
+  const progress = courseProgress[course.id] || { completed:{}, lastActivityId:"" };
+  const completed = activities.filter(activity => progress.completed?.[activity.id]).length;
+  return { course, total:activities.length, completed, percent:activities.length ? Math.round(completed * 100 / activities.length) : 0, lastActivityId:progress.lastActivityId || "" };
+}
+function renderStudentOverview(courses, myGrades, summaries, pendingExams, completedCourses) {
+  const nextCandidates = courses.flatMap(course => accessibleCourseActivities(course).filter(activity => !courseProgress[course.id]?.completed?.[activity.id]).map(activity => ({ course, activity })));
+  const next = nextCandidates[0];
+  const allActivities = courses.flatMap(course => normalizeModules(course.modules).flatMap(module => module.activities.map(activity => ({ course, activity }))));
+  const last = allActivities.find(item => courseProgress[item.course.id]?.lastActivityId === item.activity.id);
+  const average = myGrades.length ? (myGrades.reduce((total, grade) => total + Number(grade.score || 0), 0) / myGrades.length).toFixed(1) : "—";
+  $("#student-overview").innerHTML = `<section class="student-next-hero"><div><span class="eyebrow">TU RUTA DE APRENDIZAJE</span><h3>${next ? `Continúa con ${esc(next.activity.title)}` : courses.length ? "Todo está al día" : "Tu aprendizaje comienza aquí"}</h3><p>${next ? `${esc(next.course.name)} · ${activityTypeLabel(next.activity.type)}` : "Cuando haya nuevas actividades disponibles aparecerán en este espacio."}</p>${next ? `<button class="btn primary continue-course" data-course-id="${esc(next.course.id)}" data-activity-id="${esc(next.activity.id)}" type="button">Continuar aprendiendo →</button>` : ""}</div><div class="student-route-ring"><span>${summaries.length ? Math.round(summaries.reduce((total, summary) => total + summary.percent, 0) / summaries.length) : 0}%</span><small>avance general</small></div></section>
+    <div class="student-insight-grid"><article><span class="student-insight-icon">${modernIcon("exams")}</span><div><small>Evaluaciones pendientes</small><strong>${pendingExams}</strong><p>${pendingExams ? "Tienes actividades por rendir" : "No tienes pendientes"}</p></div></article><article><span class="student-insight-icon">${modernIcon("results")}</span><div><small>Promedio actual</small><strong>${average}${average === "—" ? "" : "/20"}</strong><p>${myGrades.length ? `${quantity(myGrades.length, "intento", "intentos")} registrado` : "Aún sin calificaciones"}</p></div></article><article><span class="student-insight-icon">${modernIcon("certificate")}</span><div><small>Certificados disponibles</small><strong>${completedCourses}</strong><p>Se habilitan al completar cursos</p></div></article><article><span class="student-insight-icon">${modernIcon("lesson")}</span><div><small>Última actividad</small><strong class="student-last-activity">${last ? esc(last.activity.title) : "Sin actividad"}</strong><p>${last ? esc(last.course.name) : "Empieza tu primer curso"}</p></div></article></div>`;
 }
 function renderStudentCourseModules(course, myGrades) {
   const modules = normalizeModules(course.modules);
