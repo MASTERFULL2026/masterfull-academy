@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Plataforma de cursos y exámenes para profesores y alumnos.">
   <title>Masterfull Academy | Cursos y exámenes</title>
-  <link rel="stylesheet" href="styles.css?v=20260721-5">
+  <link rel="stylesheet" href="styles.css?v=20260721-6">
 </head>
 <body class="session-loading">
   <header class="topbar">
@@ -90,9 +90,9 @@
           </div>
 
           <div id="teacher-courses" class="tab-content">
-            <div class="teacher-section-title"><div><span class="eyebrow">CONTENIDO</span><h3>Mis cursos</h3><p>Crea espacios de aprendizaje y conecta sus evaluaciones.</p></div><button class="btn primary" id="new-course-btn" type="button">+ Crear curso</button></div>
-            <div class="course-tools" role="search"><label class="sr-only" for="course-search">Buscar curso</label><input id="course-search" type="search" placeholder="Buscar por nombre, descripción o estado…"><p id="course-publish-status" class="course-publish-status" aria-live="polite"></p></div>
-            <div id="teacher-course-list" class="card-grid" aria-live="polite"></div>
+            <div class="teacher-section-title course-directory-head"><div><span class="eyebrow">CURSOS</span><h3>Mis cursos</h3><p>Selecciona un curso para administrar su contenido.</p></div><button class="btn primary" id="new-course-btn" type="button">+ Crear curso</button></div>
+            <div class="course-tools course-directory-tools" role="search"><label class="sr-only" for="course-search">Buscar curso</label><input id="course-search" type="search" placeholder="Buscar cursos…"><p id="course-publish-status" class="course-publish-status" aria-live="polite"></p></div>
+            <div id="teacher-course-list" class="course-directory" aria-live="polite"></div>
           </div>
           <div id="teacher-exams" class="tab-content">
             <div id="teacher-exam-directory">
@@ -302,6 +302,6 @@
   <footer>Masterfull Academy · Plataforma educativa digital.</footer>
   <script src="config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="app.js?v=20260721-5"></script>
+  <script src="app.js?v=20260721-6"></script>
 </body>
 </html>
