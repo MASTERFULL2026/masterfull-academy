@@ -2,6 +2,7 @@ const DRAFT_KEY = "aulaquiz_local_drafts_v1";
 const ACTIVE_ATTEMPT_KEY = "aulaquiz_active_attempt_v2";
 const PENDING_RESULTS_KEY = "aulaquiz_pending_results_v1";
 const SOUND_KEY = "aulaquiz_sound_enabled_v1";
+const COURSE_PROGRESS_KEY = "masterfull_course_progress_v1";
 const CATALOG_URL = "./data/catalog.json";
 
 const emptyDrafts = { courses: [], exams: [] };
@@ -30,6 +31,7 @@ let publishingCourseId = null;
 let builderQuestions = [];
 let builderOptionCount = 5;
 let soundEnabled = localStorage.getItem(SOUND_KEY) !== "false";
+let courseProgress = load(COURSE_PROGRESS_KEY, {});
 let audioContext = null;
 let authTransitionPending = false;
 let minuteWarningPlayed = false;
@@ -48,6 +50,22 @@ function load(key, fallback) {
 }
 function saveDrafts() { localStorage.setItem(DRAFT_KEY, JSON.stringify(drafts)); }
 function savePending() { localStorage.setItem(PENDING_RESULTS_KEY, JSON.stringify(pendingResults)); }
+function saveCourseProgress() { localStorage.setItem(COURSE_PROGRESS_KEY, JSON.stringify(courseProgress)); }
+function normalizeModules(value) {
+  if (!Array.isArray(value)) return [];
+  return value.map((module, moduleIndex) => ({
+    id: String(module.id || `module-${moduleIndex + 1}`),
+    title: String(module.title || module.name || `Módulo ${moduleIndex + 1}`).trim(),
+    unlockRule: ["immediate","previous","evaluation","date"].includes(module.unlockRule || module.unlock_rule) ? (module.unlockRule || module.unlock_rule) : "immediate",
+    unlockDetail: String(module.unlockDetail || module.unlock_detail || "").trim(),
+    activities: (Array.isArray(module.activities) ? module.activities : []).map((activity, activityIndex) => ({
+      id: String(activity.id || `activity-${moduleIndex + 1}-${activityIndex + 1}`),
+      title: String(activity.title || activity.name || `Actividad ${activityIndex + 1}`).trim(),
+      type: ["lesson","video","pdf","download","task","quiz","link"].includes(activity.type) ? activity.type : "lesson",
+      url: String(activity.url || "").trim()
+    }))
+  }));
+}
 function esc(value) {
   return String(value ?? "").replace(/[&<>"']/g, char => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[char]));
 }
@@ -63,6 +81,13 @@ function modernIcon(name) {
     exams: `<path d="M9 5h10a2 2 0 0 1 2 2v12H9a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/><path d="M7 7H5a2 2 0 0 0-2 2v10h14M12 9h5M12 13h5"/>`,
     results: `<path d="m5 12 4 4L19 6"/><circle cx="12" cy="12" r="9"/>`,
     course: `<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5z"/><path d="M4 5.5v16M8 7h8M8 11h8"/>`
+    ,lesson: `<path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h6"/>`
+    ,video: `<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3z"/>`
+    ,pdf: `<path d="M6 2h8l4 4v16H6z"/><path d="M14 2v5h5M9 13h6M9 17h4"/>`
+    ,download: `<path d="M12 3v12m-4-4 4 4 4-4"/><path d="M5 20h14"/>`
+    ,task: `<path d="M7 4h10v17H7z"/><path d="M9 4V2h6v2M10 9h4M10 13h4M10 17h3"/>`
+    ,quiz: `<circle cx="12" cy="12" r="9"/><path d="M9.8 9a2.3 2.3 0 1 1 3.2 2.1c-.8.4-1 1-1 1.9M12 17h.01"/>`
+    ,link: `<path d="M10 13a5 5 0 0 0 7.5.5l2-2a5 5 0 0 0-7-7l-1.2 1.2M14 11a5 5 0 0 0-7.5-.5l-2 2a5 5 0 0 0 7 7l1.2-1.2"/>`
   };
   const aliases = { "▦": "courses", "▤": "exams", "✓": "results", "◇": "course" };
   const key = aliases[name] || name;
@@ -222,7 +247,7 @@ function applyCourseChanges() {
   dynamicCourses.forEach(course => coursesById.set(course.id, course));
   publishedCourses = [...coursesById.values()].filter(course => !changes.get(course.id)?.deleted).map(course => {
     const change = changes.get(course.id);
-    return change ? { ...course, name: change.name || course.name, description: change.description ?? course.description } : course;
+    return change ? { ...course, name: change.name || course.name, description: change.description ?? course.description, modules: change.modules === null || change.modules === undefined ? course.modules : normalizeModules(change.modules) } : course;
   });
   const visibleCourseIds = new Set(publishedCourses.map(course => course.id));
   const examsById = new Map(catalogExams.map(exam => [exam.id, exam]));
@@ -242,7 +267,8 @@ function menuIcon(name) {
 async function loadCourseChanges() {
   if (!sb || !currentUser) return;
   await loadDynamicCourses();
-  const { data, error } = await sb.from("course_changes").select("course_id, name, description, deleted, updated_at");
+  let { data, error } = await sb.from("course_changes").select("course_id, name, description, modules, deleted, updated_at");
+  if (error?.code === "42703") ({ data, error } = await sb.from("course_changes").select("course_id, name, description, deleted, updated_at"));
   if (error) {
     console.error("No se pudieron cargar los cambios de cursos:", error);
     courseChanges = [];
@@ -250,8 +276,10 @@ async function loadCourseChanges() {
   applyCourseChanges();
 }
 async function loadDynamicCourses() {
+  let courseQuery = await sb.from("academy_courses").select("course_id, name, description, teacher_name, modules, updated_at").eq("published", true);
+  if (courseQuery.error?.code === "42703") courseQuery = await sb.from("academy_courses").select("course_id, name, description, teacher_name, updated_at").eq("published", true);
   const [courseResponse, examResponse, questionResponse] = await Promise.all([
-    sb.from("academy_courses").select("course_id, name, description, teacher_name, updated_at").eq("published", true),
+    Promise.resolve(courseQuery),
     sb.from("academy_exams").select("exam_id, course_id, title, minutes, questions_to_show, attempts_allowed, option_count").eq("published", true),
     sb.from("academy_questions").select("exam_id, question_id, position, text, image, options, correct").eq("published", true).order("position", { ascending: true })
   ]);
@@ -262,7 +290,7 @@ async function loadDynamicCourses() {
     dynamicExams = [];
     return;
   }
-  dynamicCourses = (courseResponse.data || []).map(row => ({ id: row.course_id, name: row.name, description: row.description || "", teacherName: row.teacher_name || "Profesor", updatedAt: row.updated_at, dynamic: true }));
+  dynamicCourses = (courseResponse.data || []).map(row => ({ id: row.course_id, name: row.name, description: row.description || "", teacherName: row.teacher_name || "Profesor", modules: normalizeModules(row.modules), updatedAt: row.updated_at, dynamic: true }));
   const questionsByExam = new Map();
   (questionResponse.data || []).forEach(row => {
     if (!questionsByExam.has(row.exam_id)) questionsByExam.set(row.exam_id, []);
@@ -289,6 +317,7 @@ async function normalizeCatalog(raw) {
       name: String(course.name || id).trim(),
       description: String(course.description || "").trim(),
       teacherName: String(course.teacher_name || "Profesor").trim(),
+      modules: normalizeModules(course.modules),
       examPaths: Array.isArray(course.exams) ? course.exams : []
     };
   });
@@ -446,6 +475,9 @@ function bindStaticEvents() {
   $("#course-search").addEventListener("input", renderTeacherCourseList);
   $("#new-exam-btn").addEventListener("click", () => openExamModal());
   $("#course-form").addEventListener("submit", saveCourseDraft);
+  $("#module-form").addEventListener("submit", saveModule);
+  $("#activity-form").addEventListener("submit", saveActivity);
+  $("#module-unlock-rule").addEventListener("change", toggleModuleUnlockDetail);
   $("#publish-course-form").addEventListener("submit", publishSelectedCourseExams);
   $("#exam-editor-form").addEventListener("submit", saveExamDraft);
   $("#editor-option-count").addEventListener("change", changeOptionCount);
@@ -716,11 +748,13 @@ function renderTeacherCourseWorkspace(course, exams) {
   const questionCount = exams.reduce((total, exam) => total + exam.questions.length, 0);
   const sections = [
     ["overview", "Resumen"],
+    ["modules", `Módulos (${(course.modules || []).length})`],
     ["exams", `Exámenes (${exams.length})`],
     ["questions", `Banco de preguntas (${questionCount})`]
   ];
   let content = "";
-  if (activeTeacherCourseSection === "exams") content = renderTeacherCourseExams(course, exams);
+  if (activeTeacherCourseSection === "modules") content = renderTeacherCourseModules(course);
+  else if (activeTeacherCourseSection === "exams") content = renderTeacherCourseExams(course, exams);
   else if (activeTeacherCourseSection === "questions") content = renderTeacherCourseQuestions(exams);
   else content = renderTeacherCourseOverview(course, exams, publishedCount, questionCount);
   return `<div class="course-workspace-page">
@@ -734,6 +768,22 @@ function renderTeacherCourseWorkspace(course, exams) {
     <nav class="course-workspace-nav" aria-label="Secciones de ${esc(course.name)}">${sections.map(([id, label]) => `<button class="course-subpage ${activeTeacherCourseSection === id ? "active" : ""}" data-course-section="${id}" type="button">${label}</button>`).join("")}</nav>
     <section class="course-workspace-content">${content}</section>
   </div>`;
+}
+function activityTypeLabel(type) {
+  return ({ lesson:"Lección", video:"Video", pdf:"PDF", download:"Descargable", task:"Tarea", quiz:"Evaluación", link:"Enlace" })[type] || "Lección";
+}
+function unlockRuleLabel(module, index) {
+  const detail = module.unlockDetail ? `: ${esc(module.unlockDetail)}` : "";
+  return ({ immediate:"Disponible inmediatamente", previous:index ? "Tras completar el módulo anterior" : "Disponible inmediatamente", evaluation:`Después de aprobar una evaluación${detail}`, date:`Disponible desde${detail}` })[module.unlockRule] || "Disponible inmediatamente";
+}
+function renderTeacherCourseModules(course) {
+  const modules = normalizeModules(course.modules);
+  return `<div class="course-subpage-head"><div><span class="eyebrow">MÓDULOS Y ACTIVIDADES</span><h4>Estructura del curso</h4><p>Organiza lecciones, videos, archivos, tareas, evaluaciones y enlaces en orden vertical.</p></div><button class="btn primary add-course-module" data-course-id="${esc(course.id)}" type="button">+ Crear módulo</button></div>
+    <div class="teacher-module-list">${modules.length ? modules.map((module, index) => `<article class="teacher-module-card">
+      <header><span class="module-order">${index + 1}</span><div><h4>${esc(module.title)}</h4><small>${unlockRuleLabel(module, index)} · ${quantity(module.activities.length, "actividad", "actividades")}</small></div><div class="module-actions"><button class="icon-btn move-module" data-direction="up" data-course-id="${esc(course.id)}" data-module-id="${esc(module.id)}" ${index === 0 ? "disabled" : ""} aria-label="Subir módulo">↑</button><button class="icon-btn move-module" data-direction="down" data-course-id="${esc(course.id)}" data-module-id="${esc(module.id)}" ${index === modules.length - 1 ? "disabled" : ""} aria-label="Bajar módulo">↓</button><button class="icon-btn edit-module" data-course-id="${esc(course.id)}" data-module-id="${esc(module.id)}">Editar</button><button class="icon-btn delete delete-module" data-course-id="${esc(course.id)}" data-module-id="${esc(module.id)}">Eliminar</button></div></header>
+      <div class="teacher-activity-list">${module.activities.length ? module.activities.map((activity, activityIndex) => `<div class="teacher-activity-row"><span class="activity-type-icon">${modernIcon(activity.type)}</span><div><strong>${esc(activity.title)}</strong><small>${activityTypeLabel(activity.type)}${activity.url ? ` · ${esc(activity.url)}` : ""}</small></div><div class="activity-actions"><button class="icon-btn move-activity" data-direction="up" data-course-id="${esc(course.id)}" data-module-id="${esc(module.id)}" data-activity-id="${esc(activity.id)}" ${activityIndex === 0 ? "disabled" : ""} aria-label="Subir actividad">↑</button><button class="icon-btn move-activity" data-direction="down" data-course-id="${esc(course.id)}" data-module-id="${esc(module.id)}" data-activity-id="${esc(activity.id)}" ${activityIndex === module.activities.length - 1 ? "disabled" : ""} aria-label="Bajar actividad">↓</button><button class="icon-btn edit-activity" data-course-id="${esc(course.id)}" data-module-id="${esc(module.id)}" data-activity-id="${esc(activity.id)}">Editar</button><button class="icon-btn delete delete-activity" data-course-id="${esc(course.id)}" data-module-id="${esc(module.id)}" data-activity-id="${esc(activity.id)}">Eliminar</button></div></div>`).join("") : `<p class="module-empty">Este módulo aún no tiene actividades.</p>`}</div>
+      <button class="btn secondary add-module-activity" data-course-id="${esc(course.id)}" data-module-id="${esc(module.id)}" type="button">+ Agregar actividad</button>
+    </article>`).join("") : `<div class="course-workspace-empty"><strong>Aún no hay módulos</strong><p>Crea el primero para comenzar a organizar el contenido del curso.</p></div>`}</div>`;
 }
 function renderTeacherCourseOverview(course, exams, publishedCount, questionCount) {
   const recent = exams.slice(0, 3);
@@ -784,21 +834,21 @@ function bindTeacherActions() {
 function exportCourseDraft(id) {
   const course = drafts.courses.find(item => item.id === id);
   if (!course) return;
-  download(JSON.stringify({ schema_version: 1, id: course.id, name: course.name, description: course.description || "", teacher_name: course.teacherName || currentUser.name }, null, 2), `${slug(course.id)}.json`, "application/json;charset=utf-8");
+  download(JSON.stringify({ schema_version: 2, id: course.id, name: course.name, description: course.description || "", teacher_name: course.teacherName || currentUser.name, modules: normalizeModules(course.modules) }, null, 2), `${slug(course.id)}.json`, "application/json;charset=utf-8");
 }
 function openPublishCourseModal(id) {
   const course = drafts.courses.find(item => item.id === id);
   const exams = drafts.exams.filter(exam => exam.courseId === id);
   if (!course) return;
-  if (!exams.length) {
+  if (!exams.length && !normalizeModules(course.modules).length) {
     const status = $("#course-publish-status");
     status.className = "course-publish-status error";
-    status.textContent = "Debes publicar al menos un examen antes de publicar el curso.";
+    status.textContent = "Agrega al menos un módulo o una evaluación antes de publicar el curso.";
     return;
   }
   publishingCourseId = id;
   $("#publish-course-title").textContent = `Publicar ${course.name}`;
-  $("#publish-exam-options").innerHTML = exams.map(exam => `<label class="publish-exam-option"><input type="checkbox" name="publish-exam" value="${esc(exam.id)}" checked><span><strong>${esc(exam.title)}</strong><small>${quantity(exam.questions.length, "pregunta")} · ${exam.minutes} min</small></span></label>`).join("");
+  $("#publish-exam-options").innerHTML = exams.length ? exams.map(exam => `<label class="publish-exam-option"><input type="checkbox" name="publish-exam" value="${esc(exam.id)}" checked><span><strong>${esc(exam.title)}</strong><small>${quantity(exam.questions.length, "pregunta")} · ${exam.minutes} min</small></span></label>`).join("") : `<p class="muted">Se publicarán los módulos y actividades del curso. Aún no hay evaluaciones.</p>`;
   $("#publish-course-error").textContent = "";
   $("#publish-course-modal").classList.remove("hidden");
 }
@@ -824,6 +874,14 @@ function bindTeacherExamWorkspaceActions() {
   $$("#teacher-course-workspace .edit-exam").forEach(button => button.addEventListener("click", () => openExamModal(button.dataset.id)));
   $$("#teacher-course-workspace .delete-exam").forEach(button => button.addEventListener("click", () => deleteExamDraft(button.dataset.id)));
   $$("#teacher-course-workspace .export-draft").forEach(button => button.addEventListener("click", () => { openExamModal(button.dataset.id); setTimeout(exportCurrentExam, 50); }));
+  $$("#teacher-course-workspace .add-course-module").forEach(button => button.addEventListener("click", () => openModuleModal(button.dataset.courseId)));
+  $$("#teacher-course-workspace .edit-module").forEach(button => button.addEventListener("click", () => openModuleModal(button.dataset.courseId, button.dataset.moduleId)));
+  $$("#teacher-course-workspace .add-module-activity").forEach(button => button.addEventListener("click", () => openActivityModal(button.dataset.courseId, button.dataset.moduleId)));
+  $$("#teacher-course-workspace .edit-activity").forEach(button => button.addEventListener("click", () => openActivityModal(button.dataset.courseId, button.dataset.moduleId, button.dataset.activityId)));
+  $$("#teacher-course-workspace .delete-module").forEach(button => button.addEventListener("click", () => deleteModule(button.dataset.courseId, button.dataset.moduleId)));
+  $$("#teacher-course-workspace .delete-activity").forEach(button => button.addEventListener("click", () => deleteActivity(button.dataset.courseId, button.dataset.moduleId, button.dataset.activityId)));
+  $$("#teacher-course-workspace .move-module").forEach(button => button.addEventListener("click", () => moveModule(button.dataset.courseId, button.dataset.moduleId, button.dataset.direction)));
+  $$("#teacher-course-workspace .move-activity").forEach(button => button.addEventListener("click", () => moveActivity(button.dataset.courseId, button.dataset.moduleId, button.dataset.activityId, button.dataset.direction)));
 }
 async function publishSelectedCourseExams(event) {
   event.preventDefault();
@@ -832,14 +890,14 @@ async function publishSelectedCourseExams(event) {
   const selectedIds = new Set($$('input[name="publish-exam"]:checked').map(input => input.value));
   const exams = drafts.exams.filter(exam => exam.courseId === courseId && selectedIds.has(exam.id));
   if (!course) return;
-  if (!exams.length) { $("#publish-course-error").textContent = "Debes publicar al menos un examen antes de publicar el curso."; return; }
+  if (!exams.length && !normalizeModules(course.modules).length) { $("#publish-course-error").textContent = "Agrega al menos un módulo o una evaluación antes de publicar el curso."; return; }
   const button = event.submitter;
   const status = $("#course-publish-status");
   button.disabled = true;
   $("#publish-course-error").textContent = "Publicando y verificando...";
   try {
     const payload = {
-      course: { id: course.id, name: course.name, description: course.description || "", teacher_name: course.teacherName || currentUser.name },
+      course: { id: course.id, name: course.name, description: course.description || "", teacher_name: course.teacherName || currentUser.name, modules: normalizeModules(course.modules) },
       exams: exams.map(exam => ({ ...examToJsonSchema(exam), published: true }))
     };
     const { data, error } = await sb.rpc("publish_academy_course", { payload });
@@ -955,12 +1013,12 @@ function renderStudent() {
   show("student-view");
   $("#student-welcome").textContent = `Hola, ${currentUser.name}`;
   const myGrades = results.filter(grade => grade.studentId === currentUser.id);
-  $("#student-stats").innerHTML = stat("Cursos disponibles", new Set(publishedExams.map(exam => exam.courseId)).size, "▦") + stat("Exámenes", publishedExams.length, "▤") + stat("Resultados", myGrades.length, "✓");
-  const courses = publishedCourses.filter(course => publishedExams.some(exam => exam.courseId === course.id));
+  const courses = publishedCourses.filter(course => publishedExams.some(exam => exam.courseId === course.id) || normalizeModules(course.modules).length);
+  $("#student-stats").innerHTML = stat("Cursos disponibles", courses.length, "▦") + stat("Exámenes", publishedExams.length, "▤") + stat("Resultados", myGrades.length, "✓");
   $("#student-course-list").innerHTML = courses.length ? courses.map(course => {
     const exams = publishedExams.filter(exam => exam.courseId === course.id);
-    return `<article class="student-course panel"><div class="course-heading"><div class="course-icon">${modernIcon("course")}</div><div><span class="eyebrow">CURSO</span><h3>${esc(course.name)}</h3><p>${esc(course.description || "Sin descripción")} · Profesor: ${esc(course.teacherName || "Profesor")}</p></div></div><div class="exam-rows">${exams.map(exam => renderStudentExamRow(exam, myGrades)).join("")}</div></article>`;
-  }).join("") : emptyCard("Todavía no hay cursos con exámenes publicados.");
+    return `<article class="student-course panel" data-course-id="${esc(course.id)}"><div class="course-heading"><div class="course-icon">${modernIcon("course")}</div><div><span class="eyebrow">CURSO</span><h3>${esc(course.name)}</h3><p>${esc(course.description || "Sin descripción")} · Profesor: ${esc(course.teacherName || "Profesor")}</p></div></div>${renderStudentCourseModules(course, myGrades)}${exams.length ? `<div class="exam-rows"><h4>Evaluaciones publicadas</h4>${exams.map(exam => renderStudentExamRow(exam, myGrades)).join("")}</div>` : ""}</article>`;
+  }).join("") : emptyCard("Todavía no hay cursos publicados.");
   $("#student-grades-body").innerHTML = myGrades.length ? myGrades.map(grade => {
     const exam = publishedExams.find(item => item.id === grade.examId);
     const attemptsUsed = myGrades.filter(item => item.examId === grade.examId).length;
@@ -970,6 +1028,38 @@ function renderStudent() {
   $$(".start-exam").forEach(button => button.addEventListener("click", () => startExam(button.dataset.id)));
   $$(".review-exam").forEach(button => button.addEventListener("click", () => showExamReviews(button.dataset.id)));
   $$(".review-attempt").forEach(button => button.addEventListener("click", () => showAttemptReview(button.dataset.id)));
+  $$(".student-activity-action").forEach(button => button.addEventListener("click", () => toggleActivityProgress(button.dataset.courseId, button.dataset.activityId, button.dataset.url)));
+  $$(".continue-course").forEach(button => button.addEventListener("click", () => document.getElementById(button.dataset.target)?.scrollIntoView({ behavior:"smooth", block:"center" })));
+}
+function renderStudentCourseModules(course, myGrades) {
+  const modules = normalizeModules(course.modules);
+  if (!modules.length) return "";
+  const progress = courseProgress[course.id] || { completed: {}, lastActivityId:"" };
+  const activities = modules.flatMap(module => module.activities);
+  const completedCount = activities.filter(activity => progress.completed?.[activity.id]).length;
+  const percent = activities.length ? Math.round(completedCount * 100 / activities.length) : 0;
+  const next = activities.find(activity => !progress.completed?.[activity.id]);
+  const target = progress.lastActivityId || next?.id || activities[0]?.id || "";
+  let previousComplete = true;
+  return `<section class="student-module-space"><div class="course-progress-summary"><div><span>Progreso del curso</span><strong>${percent}% completado</strong><small>${completedCount} realizadas · ${activities.length - completedCount} pendientes</small></div><div class="course-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percent}"><span style="width:${percent}%"></span></div>${target ? `<button class="btn primary continue-course" data-target="activity-${esc(target)}" type="button">Continuar curso</button>` : ""}</div>
+    <div class="student-module-list">${modules.map((module, index) => {
+      const passedEvaluation = myGrades.some(grade => grade.courseId === course.id && Number(grade.score) >= 11);
+      const dateAvailable = module.unlockRule !== "date" || (module.unlockDetail && new Date(module.unlockDetail) <= new Date());
+      const locked = (module.unlockRule === "previous" && !previousComplete) || (module.unlockRule === "evaluation" && !passedEvaluation) || !dateAvailable;
+      const moduleComplete = module.activities.length > 0 && module.activities.every(activity => progress.completed?.[activity.id]);
+      const markup = `<details class="student-module ${locked ? "is-locked" : ""}" ${index === 0 && !locked ? "open" : ""}><summary><span class="module-order">${index + 1}</span><span><strong>${esc(module.title)}</strong><small>${locked ? `🔒 ${unlockRuleLabel(module, index)}` : `${quantity(module.activities.length, "actividad", "actividades")} · ${moduleComplete ? "Completado" : "En progreso"}`}</small></span><b>${moduleComplete ? "✓" : locked ? "🔒" : "⌄"}</b></summary>${locked ? `<p class="module-lock-message">Este módulo está bloqueado. ${unlockRuleLabel(module, index)}.</p>` : `<div class="student-activity-list">${module.activities.length ? module.activities.map(activity => { const completed = Boolean(progress.completed?.[activity.id]); const inProgress = !completed && progress.lastActivityId === activity.id; return `<div class="student-activity" id="activity-${esc(activity.id)}"><span class="activity-type-icon">${modernIcon(activity.type)}</span><div><strong>${esc(activity.title)}</strong><small>${activityTypeLabel(activity.type)} · ${completed ? "Completado" : inProgress ? "En progreso" : "No iniciado"}</small></div><button class="student-activity-action ${completed ? "is-complete" : ""}" data-course-id="${esc(course.id)}" data-activity-id="${esc(activity.id)}" data-url="${esc(activity.url)}" type="button" aria-label="${completed ? "Marcar como pendiente" : "Marcar como completado"}">${completed ? "✓" : "○"}</button></div>`; }).join("") : `<p class="module-empty">No hay actividades publicadas.</p>`}</div>`}</details>`;
+      previousComplete = moduleComplete;
+      return markup;
+    }).join("")}</div></section>`;
+}
+function toggleActivityProgress(courseId, activityId, url = "") {
+  const progress = courseProgress[courseId] || { completed:{}, lastActivityId:"" };
+  progress.completed = { ...(progress.completed || {}), [activityId]: !progress.completed?.[activityId] };
+  progress.lastActivityId = activityId;
+  courseProgress[courseId] = progress;
+  saveCourseProgress();
+  if (url && /^(https?:\/\/|\.\/|\/)/i.test(url)) window.open(url, "_blank", "noopener");
+  renderStudent();
 }
 function renderStudentExamRow(exam, myGrades) {
   const attempts = myGrades.filter(item => item.examId === exam.id);
@@ -1243,6 +1333,95 @@ function recoverInterruptedAttempt() {
 function findCourse(id) {
   return publishedCourses.find(course => course.id === id) || drafts.courses.find(course => course.id === id);
 }
+function refreshActiveCourseWorkspace() {
+  renderTeacherExamWorkspace(getTeacherCourses(), getTeacherExams());
+  bindTeacherExamWorkspaceActions();
+}
+async function updateCourseModules(courseId, transform) {
+  const localIndex = drafts.courses.findIndex(course => course.id === courseId);
+  const course = findCourse(courseId);
+  if (!course) return false;
+  const modules = normalizeModules(transform(normalizeModules(course.modules)));
+  if (localIndex >= 0) {
+    drafts.courses[localIndex] = { ...drafts.courses[localIndex], modules, updatedAt: nowIso() };
+    saveDrafts();
+  } else {
+    const { error } = await sb.from("course_changes").upsert({ course_id: courseId, name: course.name, description: course.description || "", modules, deleted: false, updated_by: currentUser.id }, { onConflict: "course_id" });
+    if (error) { alert(translateError(error)); return false; }
+    await loadCourseChanges();
+  }
+  refreshActiveCourseWorkspace();
+  return true;
+}
+function toggleModuleUnlockDetail() {
+  const needsDetail = ["evaluation","date"].includes($("#module-unlock-rule").value);
+  $("#module-unlock-detail-field").classList.toggle("hidden", !needsDetail);
+  $("#module-unlock-detail").required = needsDetail;
+}
+function openModuleModal(courseId, moduleId = "") {
+  const module = normalizeModules(findCourse(courseId)?.modules).find(item => item.id === moduleId);
+  $("#module-modal-title").textContent = module ? "Editar módulo" : "Crear módulo";
+  $("#module-course-id").value = courseId;
+  $("#module-id").value = module?.id || "";
+  $("#module-title").value = module?.title || "";
+  $("#module-unlock-rule").value = module?.unlockRule || "immediate";
+  $("#module-unlock-detail").value = module?.unlockDetail || "";
+  $("#module-error").textContent = "";
+  toggleModuleUnlockDetail();
+  $("#module-modal").classList.remove("hidden");
+  $("#module-title").focus();
+}
+async function saveModule(event) {
+  event.preventDefault();
+  const courseId = $("#module-course-id").value;
+  const moduleId = $("#module-id").value;
+  const title = $("#module-title").value.trim();
+  const unlockRule = $("#module-unlock-rule").value;
+  const unlockDetail = $("#module-unlock-detail").value.trim();
+  if (!title) { $("#module-error").textContent = "Escribe un nombre para el módulo."; return; }
+  const saved = await updateCourseModules(courseId, modules => moduleId
+    ? modules.map(module => module.id === moduleId ? { ...module, title, unlockRule, unlockDetail } : module)
+    : [...modules, { id: uid(), title, unlockRule, unlockDetail, activities: [] }]);
+  if (saved) closeModal("module-modal");
+}
+function openActivityModal(courseId, moduleId, activityId = "") {
+  const module = normalizeModules(findCourse(courseId)?.modules).find(item => item.id === moduleId);
+  const activity = module?.activities.find(item => item.id === activityId);
+  $("#activity-modal-title").textContent = activity ? "Editar actividad" : "Crear actividad";
+  $("#activity-course-id").value = courseId;
+  $("#activity-module-id").value = moduleId;
+  $("#activity-id").value = activity?.id || "";
+  $("#activity-title").value = activity?.title || "";
+  $("#activity-type").value = activity?.type || "lesson";
+  $("#activity-url").value = activity?.url || "";
+  $("#activity-error").textContent = "";
+  $("#activity-modal").classList.remove("hidden");
+  $("#activity-title").focus();
+}
+async function saveActivity(event) {
+  event.preventDefault();
+  const courseId = $("#activity-course-id").value;
+  const moduleId = $("#activity-module-id").value;
+  const activityId = $("#activity-id").value;
+  const activity = { id: activityId || uid(), title: $("#activity-title").value.trim(), type: $("#activity-type").value, url: $("#activity-url").value.trim() };
+  if (!activity.title) { $("#activity-error").textContent = "Escribe un nombre para la actividad."; return; }
+  const saved = await updateCourseModules(courseId, modules => modules.map(module => module.id === moduleId ? { ...module, activities: activityId ? module.activities.map(item => item.id === activityId ? activity : item) : [...module.activities, activity] } : module));
+  if (saved) closeModal("activity-modal");
+}
+async function deleteModule(courseId, moduleId) {
+  if (!confirm("¿Eliminar este módulo y todas sus actividades?")) return;
+  await updateCourseModules(courseId, modules => modules.filter(module => module.id !== moduleId));
+}
+async function deleteActivity(courseId, moduleId, activityId) {
+  if (!confirm("¿Eliminar esta actividad?")) return;
+  await updateCourseModules(courseId, modules => modules.map(module => module.id === moduleId ? { ...module, activities: module.activities.filter(activity => activity.id !== activityId) } : module));
+}
+async function moveModule(courseId, moduleId, direction) {
+  await updateCourseModules(courseId, modules => { const index = modules.findIndex(module => module.id === moduleId); const target = index + (direction === "up" ? -1 : 1); if (index < 0 || target < 0 || target >= modules.length) return modules; [modules[index], modules[target]] = [modules[target], modules[index]]; return modules; });
+}
+async function moveActivity(courseId, moduleId, activityId, direction) {
+  await updateCourseModules(courseId, modules => modules.map(module => { if (module.id !== moduleId) return module; const activities = [...module.activities]; const index = activities.findIndex(activity => activity.id === activityId); const target = index + (direction === "up" ? -1 : 1); if (index >= 0 && target >= 0 && target < activities.length) [activities[index], activities[target]] = [activities[target], activities[index]]; return { ...module, activities }; }));
+}
 function switchTab(prefix, id, button) {
   $$(`[data-${prefix}-tab]`).forEach(tab => tab.classList.toggle("active", tab === button));
   document.querySelectorAll(`#${prefix}-view .tab-content`).forEach(content => content.classList.toggle("active", content.id === id));
@@ -1269,12 +1448,13 @@ function toggleSidebar() {
 async function saveCourseDraft(event) {
   event.preventDefault();
   const id = $("#course-id").value;
-  const course = { id: id || slug($("#course-name").value), name: $("#course-name").value.trim(), description: $("#course-description").value.trim(), teacherName: currentUser.name, local: true, updatedAt: nowIso() };
+  const existingCourse = findCourse(id);
+  const course = { id: id || slug($("#course-name").value), name: $("#course-name").value.trim(), description: $("#course-description").value.trim(), teacherName: currentUser.name, modules: normalizeModules(existingCourse?.modules), local: true, updatedAt: nowIso() };
   if (id && publishedCourses.some(item => item.id === id)) {
     const submit = event.submitter;
     if (submit) submit.disabled = true;
     $("#course-error").textContent = "";
-    const { error } = await sb.from("course_changes").upsert({ course_id: id, name: course.name, description: course.description, deleted: false, updated_by: currentUser.id }, { onConflict: "course_id" });
+    const { error } = await sb.from("course_changes").upsert({ course_id: id, name: course.name, description: course.description, modules: course.modules, deleted: false, updated_by: currentUser.id }, { onConflict: "course_id" });
     if (submit) submit.disabled = false;
     if (error) {
       console.error("Editar curso publicado:", error);
@@ -1484,7 +1664,7 @@ async function saveExamDraft(event) {
     $("#exam-editor-error").textContent = "Guardando y verificando los cambios...";
     try {
       const payload = {
-        course: { id: course.id, name: course.name, description: course.description || "", teacher_name: course.teacherName || currentUser.name },
+        course: { id: course.id, name: course.name, description: course.description || "", teacher_name: course.teacherName || currentUser.name, modules: normalizeModules(course.modules) },
         exams: [{ ...examToJsonSchema(exam), published: true }]
       };
       const { data, error } = await sb.rpc("publish_academy_course", { payload });

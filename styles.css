@@ -2390,3 +2390,60 @@ body:not(.app-shell-mode) .topbar .sound-btn { min-width: 0; }
   .exam-in-progress .timer.danger { animation: none !important; }
   .exam-in-progress .exam-progress-track > span { transition: none; }
 }
+/* Módulos y actividades de Masterfull Academy */
+.teacher-module-list,.student-module-list { display:grid; gap:14px; }
+.teacher-module-card { overflow:hidden; border:1px solid #e5e7eb; border-radius:14px; background:#fff; }
+.teacher-module-card > header { display:grid; grid-template-columns:40px minmax(0,1fr) auto; align-items:center; gap:13px; padding:17px 18px; background:#f8fafc; border-bottom:1px solid #e5e7eb; }
+.teacher-module-card h4,.teacher-module-card small { display:block; margin:0; }
+.teacher-module-card h4 { color:#0f172a; font-size:15px; font-weight:650; }
+.teacher-module-card small { margin-top:5px; color:#64748b; font-size:11px; }
+.module-order { display:grid; place-items:center; width:34px; height:34px; color:#2563eb; border-radius:10px; background:#dbeafe; font-size:13px; font-weight:700; }
+.module-actions,.activity-actions { display:flex; align-items:center; gap:6px; }
+.module-actions .icon-btn,.activity-actions .icon-btn { min-width:34px; min-height:32px; padding:6px 9px; font-size:11px; }
+.teacher-activity-list { display:grid; padding:6px 18px; }
+.teacher-activity-row { display:grid; grid-template-columns:38px minmax(0,1fr) auto; align-items:center; gap:12px; min-height:65px; border-bottom:1px solid #eef2f7; }
+.teacher-activity-row:last-child { border-bottom:0; }
+.teacher-activity-row strong,.teacher-activity-row small { display:block; }
+.teacher-activity-row strong { color:#0f172a; font-size:13px; font-weight:600; }
+.teacher-activity-row small { max-width:600px; overflow:hidden; color:#64748b; font-size:10.5px; text-overflow:ellipsis; white-space:nowrap; }
+.activity-type-icon { display:grid; place-items:center; width:34px; height:34px; color:#2563eb; border-radius:9px; background:#eff6ff; }
+.activity-type-icon .modern-icon { width:18px; height:18px; }
+.teacher-module-card > .add-module-activity { margin:5px 18px 16px; }
+.module-empty { margin:0; padding:18px; color:#64748b; font-size:12px; }
+.course-progress-summary { display:grid; grid-template-columns:minmax(180px,1fr) minmax(160px,2fr) auto; align-items:center; gap:18px; margin:22px 0 16px; padding:18px; color:#fff; border-radius:14px; background:#0f172a; }
+.course-progress-summary span,.course-progress-summary strong,.course-progress-summary small { display:block; }
+.course-progress-summary span { color:#94a3b8; font-size:10px; text-transform:uppercase; letter-spacing:.07em; }
+.course-progress-summary strong { margin:4px 0; font-size:18px; font-weight:600; }
+.course-progress-summary small { color:#cbd5e1; font-size:10.5px; }
+.course-progress-track { height:9px; overflow:hidden; border-radius:99px; background:#334155; }
+.course-progress-track > span { display:block; height:100%; border-radius:inherit; background:#22d3ee; transition:width .25s ease; }
+.student-module { overflow:hidden; border:1px solid #e5e7eb; border-radius:13px; background:#fff; }
+.student-module summary { display:grid; grid-template-columns:38px minmax(0,1fr) auto; align-items:center; gap:12px; padding:15px 17px; cursor:pointer; list-style:none; }
+.student-module summary::-webkit-details-marker { display:none; }
+.student-module summary strong,.student-module summary small { display:block; }
+.student-module summary strong { color:#0f172a; font-size:14px; font-weight:600; }
+.student-module summary small { margin-top:4px; color:#64748b; font-size:10.5px; }
+.student-module summary > b { color:#22c55e; font-size:18px; }
+.student-module[open] summary { border-bottom:1px solid #e5e7eb; background:#f8fafc; }
+.student-module.is-locked { background:#f8fafc; opacity:.8; }
+.student-module.is-locked summary { cursor:not-allowed; }
+.student-module.is-locked summary > b { color:#64748b; }
+.module-lock-message { margin:0; padding:14px 18px; color:#64748b; font-size:12px; }
+.student-activity-list { display:grid; }
+.student-activity { display:grid; grid-template-columns:38px minmax(0,1fr) 38px; align-items:center; gap:12px; min-height:65px; padding:8px 17px; border-bottom:1px solid #eef2f7; scroll-margin:90px; }
+.student-activity:last-child { border-bottom:0; }
+.student-activity strong,.student-activity small { display:block; }
+.student-activity strong { color:#0f172a; font-size:13px; font-weight:550; }
+.student-activity small { margin-top:4px; color:#64748b; font-size:10.5px; }
+.student-activity-action { display:grid; place-items:center; width:30px; height:30px; padding:0; color:#64748b; border:1px solid #cbd5e1; border-radius:50%; background:#fff; font-size:17px; }
+.student-activity-action.is-complete { color:#fff; border-color:#22c55e; background:#22c55e; }
+.student-module-space + .exam-rows { margin-top:22px; }
+.student-module-space + .exam-rows > h4 { margin:0 0 10px; color:#0f172a; font-size:14px; font-weight:600; }
+@media (max-width:800px) {
+  .teacher-module-card > header { grid-template-columns:36px minmax(0,1fr); }
+  .module-actions { grid-column:1 / -1; justify-content:flex-end; }
+  .teacher-activity-row { grid-template-columns:34px minmax(0,1fr); padding:10px 0; }
+  .activity-actions { grid-column:1 / -1; justify-content:flex-end; }
+  .course-progress-summary { grid-template-columns:1fr; gap:12px; }
+  .course-progress-summary .btn { width:100%; }
+}
