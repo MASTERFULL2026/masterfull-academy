@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Plataforma de cursos y exámenes para profesores y alumnos.">
   <title>Masterfull Academy | Cursos y exámenes</title>
-  <link rel="stylesheet" href="styles.css?v=20260722-2">
+  <link rel="stylesheet" href="styles.css?v=20260722-3">
 </head>
 <body class="session-loading">
   <header class="topbar">
@@ -91,18 +91,19 @@
 
           <div id="teacher-courses" class="tab-content">
             <div id="teacher-course-directory">
-            <div class="teacher-section-title course-directory-head"><div><span class="eyebrow">CURSOS</span><h3>Mis cursos</h3><p>Selecciona un curso para administrar su contenido.</p></div><button class="btn primary" id="new-course-btn" type="button">+ Crear curso</button></div>
-            <div class="lms-course-flow" aria-label="Flujo de creación de contenido">
-              <div class="active"><span>1</span><div><strong>Curso</strong><small>Datos generales</small></div></div>
-              <i aria-hidden="true"></i>
-              <div><span>2</span><div><strong>Módulos</strong><small>Orden y requisitos</small></div></div>
-              <i aria-hidden="true"></i>
-              <div><span>3</span><div><strong>Actividades</strong><small>Clases y recursos</small></div></div>
-              <i aria-hidden="true"></i>
-              <div><span>4</span><div><strong>Evaluaciones</strong><small>Preguntas y notas</small></div></div>
-            </div>
-            <div class="course-tools course-directory-tools" role="search"><label class="sr-only" for="course-search">Buscar curso</label><input id="course-search" type="search" placeholder="Buscar cursos…"><p id="course-publish-status" class="course-publish-status" aria-live="polite"></p></div>
-            <div id="teacher-course-list" class="course-directory" aria-live="polite"></div>
+              <div class="canvas-course-shell">
+                <aside class="course-quick-panel" aria-label="Acceso rápido a cursos">
+                  <header><div><span class="eyebrow">NAVEGACIÓN</span><strong>Cursos</strong></div><button id="course-quick-close" type="button" aria-label="Cerrar acceso rápido">×</button></header>
+                  <div id="course-quick-list" class="course-quick-list"></div>
+                  <button id="course-quick-all" class="course-quick-all" type="button">Todos los cursos <span aria-hidden="true">→</span></button>
+                  <p>Selecciona un curso para abrir sus módulos, archivos, páginas y evaluaciones.</p>
+                </aside>
+                <main class="canvas-course-main">
+                  <div class="teacher-section-title course-directory-head"><div><span class="eyebrow">TABLERO DE CURSOS</span><h3>Mis cursos</h3><p>Organiza y abre tu contenido desde una biblioteca clara.</p></div><div><button class="btn secondary course-quick-toggle" id="course-quick-toggle" type="button" aria-expanded="false">☰ Cursos</button><button class="btn primary" id="new-course-btn" type="button">+ Crear curso</button></div></div>
+                  <div class="course-tools course-directory-tools" role="search"><label class="sr-only" for="course-search">Buscar curso</label><input id="course-search" type="search" placeholder="Buscar cursos…"><p id="course-publish-status" class="course-publish-status" aria-live="polite"></p></div>
+                  <div id="teacher-course-list" class="canvas-course-directory" aria-live="polite"></div>
+                </main>
+              </div>
             </div>
             <div id="teacher-course-workspace" class="hidden" aria-live="polite"></div>
           </div>
@@ -334,6 +335,6 @@
   <footer>Masterfull Academy · Plataforma educativa digital.</footer>
   <script src="config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="app.js?v=20260722-3"></script>
+  <script src="app.js?v=20260722-4"></script>
 </body>
 </html>

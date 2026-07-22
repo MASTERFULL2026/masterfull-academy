@@ -523,6 +523,22 @@ function bindStaticEvents() {
   $("#teacher-head-new-course").addEventListener("click", () => openCourseModal());
   $("#teacher-head-new-exam").addEventListener("click", () => openExamModal());
   $("#course-search").addEventListener("input", renderTeacherCourseList);
+  $("#course-quick-toggle").addEventListener("click", () => {
+    const directory = $("#teacher-course-directory");
+    const open = !directory.classList.contains("quick-panel-open");
+    directory.classList.toggle("quick-panel-open", open);
+    $("#course-quick-toggle").setAttribute("aria-expanded", String(open));
+  });
+  $("#course-quick-close").addEventListener("click", () => {
+    $("#teacher-course-directory").classList.remove("quick-panel-open");
+    $("#course-quick-toggle").setAttribute("aria-expanded", "false");
+  });
+  $("#course-quick-all").addEventListener("click", () => {
+    $("#course-search").value = "";
+    renderTeacherCourseList();
+    $("#teacher-course-directory").classList.remove("quick-panel-open");
+    $("#course-quick-toggle").setAttribute("aria-expanded", "false");
+  });
   $("#new-exam-btn").addEventListener("click", () => openExamModal());
   $("#course-form").addEventListener("submit", saveCourseDraft);
   $("#course-name").addEventListener("input", updateCourseSetupPreview);
@@ -754,6 +770,7 @@ function renderTeacherOverview() {
 }
 function renderTeacherCourseList(bind = true) {
   $("#teacher-course-list").innerHTML = renderTeacherCourses();
+  renderTeacherQuickCourses();
   if (bind) bindTeacherActions();
 }
 function activateStat(action) {
@@ -764,15 +781,37 @@ function activateStat(action) {
 function renderTeacherCourses() {
   const query = ($("#course-search")?.value || "").trim().toLocaleLowerCase("es");
   const matches = (course, state) => !query || `${course.name} ${state}`.toLocaleLowerCase("es").includes(query);
-  const published = publishedCourses.map(course => {
-    if (!matches(course, "publicado")) return "";
-    return `<article class="course-directory-row"><span class="course-row-accent" aria-hidden="true"></span><button class="course-row-main manage-course-content" data-course-id="${esc(course.id)}" type="button"><span class="course-row-icon" aria-hidden="true">${modernIcon("course")}</span><span class="course-row-copy"><strong>${esc(course.name)}</strong><small class="course-row-status published"><i></i>Publicado</small></span></button><button class="course-row-open manage-course-content" data-course-id="${esc(course.id)}" type="button">Abrir <span aria-hidden="true">→</span></button><details class="course-row-menu"><summary aria-label="Más acciones para ${esc(course.name)}" title="Más acciones">•••</summary><div><button class="create-exam-course" data-id="${esc(course.id)}" type="button">Crear evaluación</button><button class="edit-published-course" data-id="${esc(course.id)}" type="button">Editar curso</button><button class="delete-published-course danger" data-id="${esc(course.id)}" type="button">Eliminar curso</button></div></details></article>`;
-  }).filter(Boolean);
-  const local = drafts.courses.map(course => {
-    if (!matches(course, "borrador")) return "";
-    return `<article class="course-directory-row draft"><span class="course-row-accent" aria-hidden="true"></span><button class="course-row-main manage-course-content" data-course-id="${esc(course.id)}" type="button"><span class="course-row-icon" aria-hidden="true">${modernIcon("course")}</span><span class="course-row-copy"><strong>${esc(course.name)}</strong><small class="course-row-status draft"><i></i>Borrador</small></span></button><button class="course-row-open manage-course-content" data-course-id="${esc(course.id)}" type="button">Abrir <span aria-hidden="true">→</span></button><details class="course-row-menu"><summary aria-label="Más acciones para ${esc(course.name)}" title="Más acciones">•••</summary><div><button class="publish-course" data-id="${esc(course.id)}" type="button">Publicar curso</button><button class="create-exam-course" data-id="${esc(course.id)}" type="button">Crear evaluación</button><button class="edit-course" data-id="${esc(course.id)}" type="button">Editar curso</button><button class="delete-course danger" data-id="${esc(course.id)}" type="button">Eliminar curso</button></div></details></article>`;
-  }).filter(Boolean);
-  return published.concat(local).join("") || `<div class="course-directory-empty">${modernIcon("course")}<strong>No se encontraron cursos</strong><small>Prueba con otro nombre o crea un curso nuevo.</small></div>`;
+  const published = publishedCourses.filter(course => matches(course, "publicado"));
+  const local = drafts.courses.filter(course => matches(course, "borrador"));
+  if (!published.length && !local.length) return `<div class="course-directory-empty">${modernIcon("course")}<strong>No se encontraron cursos</strong><small>Prueba con otro nombre o crea un curso nuevo.</small></div>`;
+  return `${renderCanvasCourseGroup("Cursos publicados", published, false)}${renderCanvasCourseGroup("Cursos no publicados", local, true)}`;
+}
+
+function renderCanvasCourseGroup(title, courses, isDraft) {
+  const emptyMessage = isDraft ? "No tienes cursos pendientes de publicación." : "Todavía no hay cursos publicados.";
+  return `<section class="canvas-course-group ${isDraft ? "drafts" : "published"}"><header><h4>${title} <span>${courses.length}</span></h4></header>${courses.length ? `<div class="canvas-course-grid">${courses.map((course, index) => renderCanvasCourseCard(course, isDraft, index)).join("")}</div>` : `<p class="canvas-course-group-empty">${emptyMessage}</p>`}</section>`;
+}
+
+function renderCanvasCourseCard(course, isDraft, index) {
+  const modules = normalizeModules(course.modules);
+  const activities = modules.reduce((total, module) => total + module.activities.length, 0);
+  const exams = [...publishedExams, ...drafts.exams].filter(exam => exam.courseId === course.id).length;
+  const editClass = isDraft ? "edit-course" : "edit-published-course";
+  const deleteClass = isDraft ? "delete-course" : "delete-published-course";
+  return `<article class="canvas-course-card tone-${index % 5} ${isDraft ? "draft" : ""}">
+    <div class="canvas-course-cover"><button class="manage-course-content" data-course-id="${esc(course.id)}" type="button" aria-label="Abrir ${esc(course.name)}"><span>${esc(course.name.charAt(0).toLocaleUpperCase("es"))}</span></button><details class="canvas-course-menu"><summary aria-label="Más acciones para ${esc(course.name)}">⋮</summary><div>${isDraft ? `<button class="publish-course" data-id="${esc(course.id)}" type="button">Publicar curso</button>` : ""}<button class="create-exam-course" data-id="${esc(course.id)}" type="button">Crear evaluación</button><button class="${editClass}" data-id="${esc(course.id)}" type="button">Editar curso</button><button class="${deleteClass} danger" data-id="${esc(course.id)}" type="button">Eliminar curso</button></div></details></div>
+    <div class="canvas-course-body"><button class="canvas-course-title manage-course-content" data-course-id="${esc(course.id)}" type="button">${esc(course.name)}</button><small>${isDraft ? "No publicado" : "Publicado"}</small><p>${esc(course.description || "Curso listo para organizar contenido.")}</p><footer><span title="Módulos">${modernIcon("page")} ${modules.length}</span><span title="Recursos">${modernIcon("folder")} ${activities}</span><span title="Evaluaciones">${modernIcon("quiz")} ${exams}</span><button class="manage-course-content" data-course-id="${esc(course.id)}" type="button">Abrir <span aria-hidden="true">→</span></button></footer></div>
+  </article>`;
+}
+
+function renderTeacherQuickCourses() {
+  const target = $("#course-quick-list");
+  if (!target) return;
+  const groups = [
+    ["Cursos publicados", publishedCourses],
+    ["Cursos no publicados", drafts.courses]
+  ];
+  target.innerHTML = groups.map(([label, courses]) => `<section><strong>${label}</strong>${courses.length ? courses.map(course => `<button class="manage-course-content" data-course-id="${esc(course.id)}" type="button"><i aria-hidden="true"></i><span>${esc(course.name)}</span></button>`).join("") : `<small>Sin cursos</small>`}</section>`).join("");
 }
 function renderTeacherExamWorkspace(courses, exams) {
   const coursesById = new Map(courses.map(course => [course.id, course]));
