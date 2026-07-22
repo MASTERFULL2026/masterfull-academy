@@ -486,6 +486,8 @@ function bindStaticEvents() {
   $("#course-search").addEventListener("input", renderTeacherCourseList);
   $("#new-exam-btn").addEventListener("click", () => openExamModal());
   $("#course-form").addEventListener("submit", saveCourseDraft);
+  $("#course-name").addEventListener("input", updateCourseSetupPreview);
+  $("#course-description").addEventListener("input", updateCourseSetupPreview);
   $("#module-form").addEventListener("submit", saveModule);
   $("#activity-form").addEventListener("submit", saveActivity);
   $("#module-unlock-rule").addEventListener("change", toggleModuleUnlockDetail);
@@ -516,7 +518,7 @@ function bindStaticEvents() {
   $$("[data-teacher-tab]").forEach(button => button.addEventListener("click", () => switchTab("teacher", button.dataset.teacherTab, button)));
   $$("[data-student-tab]").forEach(button => button.addEventListener("click", () => switchTab("student", button.dataset.studentTab, button)));
   $$(".question-mode").forEach(button => button.addEventListener("click", () => setQuestionMode(button.dataset.questionMode)));
-  $$(".modal-close").forEach(button => button.addEventListener("click", () => closeModal(button.dataset.close)));
+  $$('[data-close]').forEach(button => button.addEventListener("click", () => closeModal(button.dataset.close)));
   document.addEventListener("visibilitychange", () => {
     if (document.hidden && activeExam && timerInterval) finishExam(false, "El examen se entregó al cambiar de pestaña o minimizar la ventana.", true);
   });
@@ -1685,12 +1687,32 @@ function openCourseModal(id = "") {
   const publishedCourse = publishedCourses.find(item => item.id === id);
   const course = localCourse || publishedCourse;
   $("#course-modal-title").textContent = publishedCourse ? "Editar curso publicado" : localCourse ? "Editar curso local" : "Crear curso local";
+  $("#course-breadcrumb-current").textContent = course ? "Editar curso" : "Nuevo curso";
+  $("#course-setup-status").textContent = publishedCourse ? "Curso publicado" : "Borrador local";
+  $("#course-setup-status").classList.toggle("published", Boolean(publishedCourse));
   $("#course-id").value = course?.id || "";
   $("#course-name").value = course?.name || "";
   $("#course-description").value = course?.description || "";
   $("#course-error").textContent = "";
+  updateCourseSetupPreview();
   $("#course-modal").classList.remove("hidden");
   $("#course-name").focus();
+}
+function updateCourseSetupPreview() {
+  const id = $("#course-id")?.value || "";
+  const course = findCourse(id);
+  const name = $("#course-name")?.value.trim() || "Nuevo curso";
+  const description = $("#course-description")?.value.trim() || "Agrega una descripción para orientar a tus estudiantes.";
+  const modules = normalizeModules(course?.modules);
+  const activities = modules.reduce((total, module) => total + module.activities.length, 0);
+  const exams = getTeacherExams().filter(exam => exam.courseId === id).length;
+  $("#course-preview-initial").textContent = name.charAt(0).toLocaleUpperCase("es");
+  $("#course-preview-name").textContent = name;
+  $("#course-preview-description").textContent = description;
+  $("#course-description-count").textContent = `${$("#course-description").value.length} / 250`;
+  $("#course-module-preview-count").textContent = modules.length;
+  $("#course-activity-preview-count").textContent = activities;
+  $("#course-exam-preview-count").textContent = exams;
 }
 function toggleSidebar() {
   const mobile = matchMedia("(max-width: 900px)").matches;
